@@ -17,7 +17,7 @@ public final class Lagoon {
     // ----------------------
     // Turbine configuration 
     // ----------------------
-    private static final int MUMBER_OF_TURBINES = 16;
+    private static final int NUMBER_OF_TURBINES = 16;
     private static final double TURBINE_CAPACITY_MW = 20; // MW per turbine
     private static final double TURBINE_DIAMETER_M = 7.35; // Diameter in meters
     private static final double TURBINE_DISCHARGE_COEFFICIENT = 1.36; // Efficiency of the turbine (Dimensionless)
@@ -50,7 +50,7 @@ public final class Lagoon {
     // Public getter methods
     // --------------------------
     public static int getNumberOfTurbines() {
-        return MUMBER_OF_TURBINES;
+        return NUMBER_OF_TURBINES;
     }
 
     public static double getTurbineCapacityMW() {
@@ -78,7 +78,7 @@ public final class Lagoon {
     }
 
     public static int getNumberOfGridPoints() {
-        return numberOfGP;
+        return NUMBER_OF_GP;
     }
 
     public static double getGridFrequencyHz() {
@@ -107,9 +107,15 @@ public final class Lagoon {
     // --------------------------
     // Turbine Orientation Enum
     // --------------------------
+    /**
+     * Enum representing turbine operating modes during tidal cycles.
+     * EBB: Turbines operate during ebb tide (outgoing tide)
+     * FLOOD: Turbines operate during flood tide (incoming tide)
+     * BIDIRECTIONAL: Turbines can operate in both directions (incoming and outgoing tides)
+     */
     public enum Orientation {
-        EBB, // EBB: Turbines operate during ebb tide (outgoing tide)
-        FLOOD, // FLOOD: Turbines operate during flood tide (incoming tide)
-        BIDIRECTIONAL; // BIDIRECTIONAL: Turbines can operate in both directions (incoming and outgoing tides)
+        EBB, 
+        FLOOD, 
+        BIDIRECTIONAL; 
     }
 }
