@@ -32,7 +32,7 @@ public final class Lagoon {
     // --------------------------
     // Grid configuration
     // --------------------------
-    private static final int numberOfGP = 95; // Number of grid points
+    private static final int NUMBER_OF_GP = 95; // Number of grid points
     private static final double GRID_FREQUENCY_HZ = 50; // Frequency of the grid in Hertz
 
     // --------------------------
