@@ -18,7 +18,7 @@ public final class Lagoon {
     // Turbine configuration 
     // ----------------------
     private static final int NUMBER_OF_TURBINES = 16;
-    private static final double TURBINE_CAPACITY_MW = 20; // MW per turbine
+    private static final double TURBINE_CAPACITY_MW = 20.0; // MW per turbine
     private static final double TURBINE_DIAMETER_M = 7.35; // Diameter in meters
     private static final double TURBINE_DISCHARGE_COEFFICIENT = 1.36; // Efficiency of the turbine (Dimensionless)
     private static final Orientation TURBINE_ORIENTATION = Orientation.BIDIRECTIONAL; // Orientation of the turbines
@@ -26,14 +26,14 @@ public final class Lagoon {
     // --------------------------
     // Sluice Gate configuration 
     // --------------------------
-    private static final double SLUICE_AREA_M2 = 800; // Area of sluice gate in square meters
+    private static final double SLUICE_AREA_M2 = 800.0; // Area of sluice gate in square meters
     private static final double SLUICE_DISCHARGE_COEFFICIENT = 1.0; // Efficiency of sluice gate (Dimensionless)
 
     // --------------------------
     // Grid configuration
     // --------------------------
     private static final int NUMBER_OF_GP = 95; // Number of grid points
-    private static final double GRID_FREQUENCY_HZ = 50; // Frequency of the grid in Hertz
+    private static final double GRID_FREQUENCY_HZ = 50.0; // Frequency of the grid in Hertz
 
     // --------------------------
     // Economic parameters
