@@ -155,4 +155,23 @@ public class Individual {
             clone.crowdingDistance = this.crowdingDistance;
             return clone;
         }
+
+
+        @Override
+        /**
+         * Returns a string representation of the individual for debugging and logging.
+         * Includes decision variables, energy output, unit cost, rank, and crowding distance.
+         * 
+         * @return String representation of the individual.
+         */
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+            sb.append("Individual:\n");
+            sb.append (" decisionVariables: ").append(Arrays.toString(decisionVariables)).append("\n");
+            sb.append(", EnergyOutput: ").append(energyOutput).append("MWh\n");
+            sb.append(", Unit Cost: ").append(unitCost).append(" GBP/MWh\n");
+            sb.append(", Rank: ").append(rank).append("\n");
+            sb.append(", crowdingDistance: ").append(crowdingDistance).append("\n");
+            return sb.toString();
+        }
 }
