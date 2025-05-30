@@ -3,7 +3,7 @@ package src.model;
 /**
  * Represents the fixed configuration of the Swansea Bay Tidal Lagoon for simulation and optimisation.
  * Constants are grouped by category: turbine, sluice, grid, and economic parameters.
- * This class is not meant ot be instantiated.
+ * This class is not meant to be instantiated.
  * 
  * All parameters are accessible via static getter methods.
  * 

@@ -23,6 +23,9 @@ import java.util.Arrays;
  */
 public class Individual {
 
+        private static final double MIN_HEAD = 0.5; // Minimum head value (Hs and He cannot be negative)
+        private static final double MAX_HEAD = 4.0; // Maximum head value (Hs and He cannot exceed this limit)
+
         private final double[] decisionVariables; //Encodes [Hs, He] pairs for each half-tide
         private double energyOutput; // Total energy output in MWh (Objective 1)
         private double unitCost; // Unit cost in GBP per MWh (Objective 2)
@@ -84,6 +87,9 @@ public class Individual {
          * @param value The new starting head.
          */
         public void setStartHead(int halfTideIndex, double value) {
+            if (!isValidHead(value)) {
+                throw new IllegalArgumentException("Invalid Hs: must be between " + MIN_HEAD + " and " + MAX_HEAD);
+            }
             decisionVariables[halfTideIndex * PARAMETERS_PER_HALF_TIDE] = value;
         }
 
@@ -93,6 +99,9 @@ public class Individual {
          * @param value The new ending head.
          */
         public void setEndHead(int halfTideIndex, double value) {
+            if (!isValidHead(value)) {
+                throw new IllegalArgumentException("Invalid He: must be between " + MIN_HEAD + " and " + MAX_HEAD);
+            }
             decisionVariables[halfTideIndex * PARAMETERS_PER_HALF_TIDE + 1] = value;
         }
 
@@ -134,6 +143,13 @@ public class Individual {
 
         public void setCrowdingDistance(double crowdingDistance) {
             this.crowdingDistance = crowdingDistance;
+        }
+
+        /*
+         * Validates the head values (Hs and He) for each half-tide.
+         */
+        private static boolean isValidHead(double head) {
+            return head >= MIN_HEAD && head <= MAX_HEAD;
         }
 
         //---------------------------
