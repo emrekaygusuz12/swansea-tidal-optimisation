@@ -1,5 +1,7 @@
 package src;
 
+import src.optimisation.Individual;
+import src.optimisation.IndividualGenerator;
 import src.utils.TideDataReader;
 
 import java.util.Collections;
@@ -8,7 +10,9 @@ import java.io.IOException;
 
 public class Main {
     public static void main(String[] args) {
+    
         String filePath = "data/b1111463.txt"; // Path to the tide height data file
+
         try {
             List<Double> tideHeights = TideDataReader.readTideHeights(filePath);
             //System.out.println("Tide Heights: " + tideHeights);
@@ -20,9 +24,18 @@ public class Main {
             for (int i =0; i< Math.min(50, tideHeights.size()); i++) {
                 System.out.printf("Tide %d: %.2f m%n", i + 1, tideHeights.get(i));
             }
+
+            Individual ind = IndividualGenerator.createRandomIndividual(8); // Create an individual with 48 half-tides
+            
+            System.out.println("Random Individual: " + ind);
         } catch (IOException e) {
             System.err.println("Error reading tide heights: " + e.getMessage());
         }
     }
-    
 }
+    
+
+    
+    
+    
+

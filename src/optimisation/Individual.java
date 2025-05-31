@@ -152,6 +152,14 @@ public class Individual {
             return head >= MIN_HEAD && head <= MAX_HEAD;
         }
 
+        public static double getMinHead() {
+            return MIN_HEAD;
+        }
+
+        public static double getMaxHead() {
+            return MAX_HEAD;
+        }
+
         //---------------------------
         // Cloning
         //---------------------------
