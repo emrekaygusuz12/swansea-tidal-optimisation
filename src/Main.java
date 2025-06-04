@@ -4,7 +4,7 @@ import src.optimisation.Individual;
 import src.optimisation.IndividualGenerator;
 import src.optimisation.TidalSimulator;
 import src.utils.TideDataReader;
-
+import src.optimisation.ObjectiveFunction;
 
 import java.util.Collections;
 import java.util.List;
@@ -31,8 +31,12 @@ public class Main {
             
             System.out.println("Random Individual: " + ind);
  
-            double energy = TidalSimulator.simulate(tideHeights, ind);  
-            System.out.printf("Total energy output: %.2f MWh%n", energy);
+            //double energy = TidalSimulator.simulate(tideHeights, ind);  
+            //System.out.printf("Total energy output: %.2f MWh%n", energy);
+
+            ObjectiveFunction.evaluate(tideHeights, ind);
+            System.out.printf("Energy Output: %.2f MWh%n", ind.getEnergyOutput());
+            System.out.printf("Unit Cost of Energy: %.2f GBP/MWh%n", ind.getUnitCost());
 
         } catch (IOException e) {
             System.err.println("Error reading tide heights: " + e.getMessage());
