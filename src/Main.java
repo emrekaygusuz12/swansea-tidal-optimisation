@@ -2,7 +2,9 @@ package src;
 
 import src.optimisation.Individual;
 import src.optimisation.IndividualGenerator;
+import src.optimisation.TidalSimulator;
 import src.utils.TideDataReader;
+
 
 import java.util.Collections;
 import java.util.List;
@@ -28,6 +30,10 @@ public class Main {
             Individual ind = IndividualGenerator.createRandomIndividual(8); // Create an individual with 48 half-tides
             
             System.out.println("Random Individual: " + ind);
+ 
+            double energy = TidalSimulator.simulate(tideHeights, ind);  
+            System.out.printf("Total energy output: %.2f MWh%n", energy);
+
         } catch (IOException e) {
             System.err.println("Error reading tide heights: " + e.getMessage());
         }

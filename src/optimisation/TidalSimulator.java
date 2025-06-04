@@ -67,7 +67,8 @@ public class TidalSimulator {
                     flow *= flowDirection; // Adjust flow direction based on sea level
 
                     double efficiency = Lagoon.getTurbineDischargeCoefficient(); // Efficiency of the turbine
-                    double powerMW = Math.abs(flow) * WATER_DENSITY * GRAVITY * headDifference * efficiency; // Power (W) = ρ × g × Q × h × η
+                    double powerMW = Math.abs(flow) * WATER_DENSITY * GRAVITY * headDifference * efficiency; // Power (W) = rho * g * Q * h * efficiency
+
                     powerMW *= WATTS_TO_MW; // Convert Watts to MW
 
                     double maxPowerMW = Lagoon.getInstalledCapacityMW();
