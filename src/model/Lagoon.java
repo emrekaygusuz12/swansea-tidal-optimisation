@@ -14,6 +14,8 @@ package src.model;
 
 public final class Lagoon {
 
+    private static final double LAGOON_SURFACE_AREA_M2 = 11_500_000.0; // Surface area of the lagoon in square meters
+
     // ----------------------
     // Turbine configuration 
     // ----------------------
@@ -49,6 +51,10 @@ public final class Lagoon {
     // --------------------------
     // Public getter methods
     // --------------------------
+
+    public static double getLagoonSurfaceAreaM2() {
+        return LAGOON_SURFACE_AREA_M2;
+    }
     public static int getNumberOfTurbines() {
         return NUMBER_OF_TURBINES;
     }
