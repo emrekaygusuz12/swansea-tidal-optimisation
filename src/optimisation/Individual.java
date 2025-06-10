@@ -168,6 +168,7 @@ public class Individual {
 
         /**
          * Creates a deep clone of the individual inclucing decision variables and metadata.
+         * So the new generation doesnt overwrite their values during crossover and mutation.
          * 
          * @return cloned individual.
          */

@@ -27,7 +27,7 @@ public class Main {
                 System.out.printf("Tide %d: %.2f m%n", i + 1, tideHeights.get(i));
             }
 
-            Individual ind = IndividualGenerator.createRandomIndividual(8); // Create an individual with 48 half-tides
+            Individual ind = IndividualGenerator.createRandomIndividual(48); // 365 days * 4 half-tides per day = 1460 half-tides per year
             
             System.out.println("Random Individual: " + ind);
  
