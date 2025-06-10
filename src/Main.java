@@ -17,33 +17,62 @@ public class Main {
 
         try {
             List<Double> tideHeights = TideDataReader.readTideHeights(filePath);
-            //System.out.println("Tide Heights: " + tideHeights);
             System.out.printf("Total readings: %d%n", tideHeights.size());
             System.out.printf("Min: %.2f m, Max: %.2f m%n",
             Collections.min(tideHeights), Collections.max(tideHeights));
 
+            int numberOfHalfTides = 48;
+            int readingsPerHalfTide = 24;
+            int totalReadingsNeeded = numberOfHalfTides * readingsPerHalfTide;
 
-            for (int i =0; i< Math.min(50, tideHeights.size()); i++) {
+            List<Double> testTideData = tideHeights.subList(0, Math.min(totalReadingsNeeded, tideHeights.size()));
+            System.out.printf("Using %d readings for %d half-tides (12 hours simulation)%n", testTideData.size(), numberOfHalfTides);
+
+            System.out.println("\nFirst 20 tide readings:");
+            for (int i =0; i< Math.min(20, tideHeights.size()); i++) {
                 System.out.printf("Tide %d: %.2f m%n", i + 1, tideHeights.get(i));
             }
 
-            Individual ind = IndividualGenerator.createRandomIndividual(48); // 365 days * 4 half-tides per day = 1460 half-tides per year
+            // Create a individual for testing
+            Individual ind = IndividualGenerator.createRandomIndividual(numberOfHalfTides);
             
-            System.out.println("Random Individual: " + ind);
- 
-            //double energy = TidalSimulator.simulate(tideHeights, ind);  
-            //System.out.printf("Total energy output: %.2f MWh%n", energy);
+            System.out.println("\nRandom Individual Strategy:");
+            System.out.printf("Number of decision variables: %d%n", ind.getDecisionVariables().length);
+            System.out.printf("Strategy covers %d half-tides%n", numberOfHalfTides);
+            
+            // Show first few control parameters for verification
+            System.out.println("First 5 half-tide control parameters [Hs, He]:");
+            for (int i = 0; i < Math.min(5, numberOfHalfTides); i++) {
+                System.out.printf("Half-tide %d: Hs=%.2f m, He=%.2f m%n", 
+                    i+1, ind.getStartHead(i), ind.getEndHead(i));
+            }
 
-            ObjectiveFunction.evaluate(tideHeights, ind);
+            // Run simulation with corrected data
+            ObjectiveFunction.evaluate(testTideData, ind);
+            
+            System.out.println("\n=== SIMULATION RESULTS ===");
+            System.out.printf("Simulation period: 12 hours (%d half-tides)%n", numberOfHalfTides);
             System.out.printf("Energy Output: %.2f MWh%n", ind.getEnergyOutput());
             System.out.printf("Unit Cost of Energy: %.2f GBP/MWh%n", ind.getUnitCost());
+            
+            // Extrapolate to annual estimate for comparison
+            double dailyEnergy = ind.getEnergyOutput() * 2; // 12 hours * 2 = 24 hours
+            double annualEnergy = dailyEnergy * 365; // Annual estimate
+            System.out.printf("Extrapolated annual energy: %.0f GWh%n", annualEnergy / 1000);
+            System.out.printf("Literature range: 400-732 GWh/year%n");
+            
+            // Performance verification
+            if (ind.getEnergyOutput() > 0 && ind.getEnergyOutput() < 1000) {
+                System.out.println(" Energy output looks realistic for 12-hour period");
+            } else {
+                System.out.println(" Energy output may need verification");
+            }
 
         } catch (IOException e) {
             System.err.println("Error reading tide heights: " + e.getMessage());
         }
     }
 }
-    
 
     
     

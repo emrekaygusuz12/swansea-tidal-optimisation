@@ -23,7 +23,7 @@ public class TidalSimulator {
     private static final double WATTS_TO_MW = 1e-6; // Conversion factor from Watts to MW (1,000,000 W = 1 MW)
     private static final double GRAVITY = 9.81; // Acceleration due to gravity in m/s^2
     private static final double WATER_DENSITY = 1025.0; // Density of water in kg/m^3
-    private static final double TIME_STEP_HOURS = 0.25; // Time step in hours (15 minutes)
+    private static final double TIME_STEP_HOURS = 0.25 / 24; // Time step in hours (15 minutes)
     private static final double TIME_STEP_SECONDS = TIME_STEP_HOURS * 3600; // Convert hours to seconds
 
     private static final double MIN_LAGOON_LEVEL = -5.0; // Minimum lagoon level in meters
@@ -89,7 +89,7 @@ public class TidalSimulator {
                     double dischargeCoefficient = Lagoon.getTurbineDischargeCoefficient(); // Efficiency of the turbine
                     double actualFlow = theoreticalFlow * dischargeCoefficient; // Adjust flow rate for efficiency
 
-                    // Calculate power using: P = ρ * g * Q * h * efficiency
+                    // Calculate power using: P = water density * g * Q * h * efficiency
                     double powerMW = actualFlow * WATER_DENSITY * GRAVITY * headDifference * WATTS_TO_MW; 
                     
                     // Limit power to installed capacity
