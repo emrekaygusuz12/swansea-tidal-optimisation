@@ -3,6 +3,21 @@ package src.optimisation;
 import src.model.Lagoon;
 import java.util.List;
 
+
+/**
+ * Simulates the operation of a tidal lagoon using a 0D model approach.
+ * 
+ * This class implements the physics of tidal lagoon operation including:
+ * - Orifice theory for flow calculations
+ * - Mass conservation for lagoon level updates
+ * - Power generation calculations
+ * - Two-way (bidirectional) turbine operation
+ * 
+ * Uses backward-difference method for temporal discretisation.
+ * 
+ * @author Emre Kaygusuz
+ * @version 1.1
+ */
 public class TidalSimulator {
 
     private static final double WATTS_TO_MW = 1e-6; // Conversion factor from Watts to MW (1,000,000 W = 1 MW)
@@ -48,7 +63,13 @@ public class TidalSimulator {
                double seaLevel = tideHeights.get(tideIndex);
                double headDifference = Math.abs(seaLevel - lagoonLevel);
 
-                
+               // Ensure head difference is positive for sqrt calculation
+                if (headDifference < 0) {
+                    System.err.println("Warning: Negative head difference detected. Setting to 0.");
+                    headDifference = 0.0; 
+                } 
+
+
                //boolean isTurbineActive = headDifference >= Hs;
                if (!turbineOn && headDifference >= Hs) {
                     turbineOn = true; // Activate the turbine
@@ -58,29 +79,44 @@ public class TidalSimulator {
                     turbineOn = false; // Deactivate the turbine if head difference exceeds He
                }
 
-               if (turbineOn) {
+               if (turbineOn && headDifference > 0) { 
 
-                    double flowDirection = (seaLevel > lagoonLevel) ? 1.0 : -1.0; // Determine flow direction based on sea level
+                    // Calculate theoretical flow rate using orifice equation: Q = A * sqrt(2gh)
+                    // where A is the area of the turbine, g is gravity, and h is the head difference
+                    double theoreticalFlow = totalTurbineArea * Math.sqrt(2 * GRAVITY * headDifference); // Flow rate in m^3/s
 
+                    // Apply discharge coefficient for turbine efficiency
+                    double dischargeCoefficient = Lagoon.getTurbineDischargeCoefficient(); // Efficiency of the turbine
+                    double actualFlow = theoreticalFlow * dischargeCoefficient; // Adjust flow rate for efficiency
 
-                    double flow = totalTurbineArea * Math.sqrt(2 * GRAVITY * headDifference); // Q = A * sqrt(2gh)
-                    flow *= flowDirection; // Adjust flow direction based on sea level
-
-                    double efficiency = Lagoon.getTurbineDischargeCoefficient(); // Efficiency of the turbine
-                    double powerMW = Math.abs(flow) * WATER_DENSITY * GRAVITY * headDifference * efficiency; // Power (W) = rho * g * Q * h * efficiency
-
-                    powerMW *= WATTS_TO_MW; // Convert Watts to MW
-
+                    // Calculate power using: P = ρ * g * Q * h * efficiency
+                    double powerMW = actualFlow * WATER_DENSITY * GRAVITY * headDifference * WATTS_TO_MW; 
+                    
+                    // Limit power to installed capacity
                     double maxPowerMW = Lagoon.getInstalledCapacityMW();
                     powerMW = Math.min(powerMW, maxPowerMW); // Limit power to installed capacity
 
+                    // Calculate energy for this time step
                     double energy = powerMW * TIME_STEP_HOURS; // Energy in MWh
                     totalEnergyOutput += energy; // Accumulate energy output
 
-                    double volumeChange = Math.abs(flow) * TIME_STEP_SECONDS; // Volume change in m^3
+                    // Corrected flow direction logic
+                    // Calculate volume change and update lagoon lvel based on flow direction
+
+                    double volumeChange = actualFlow * TIME_STEP_SECONDS; // Volume change in m^3
                     double levelChange = volumeChange / lagoonSurfaceArea; // Change in lagoon level in meters
-                    lagoonLevel += levelChange * flowDirection; // Update lagoon level
-                    lagoonLevel = Math.max(MIN_LAGOON_LEVEL, Math.min(lagoonLevel, MAX_LAGOON_LEVEL)); // Clamp lagoon level within bounds
+
+                    // Flow direction determines level change:
+                    if (seaLevel > lagoonLevel) {
+                        // Water flows into the lagoon (level rises)
+                        lagoonLevel += levelChange; // Ensure positive change
+                    } else {
+                        // Water flows out of the lagoon (level falls)
+                       lagoonLevel -= levelChange; // Ensure negative change
+                    }
+
+                    // Clamp lagoon level within bounds
+                    lagoonLevel = Math.max(MIN_LAGOON_LEVEL, Math.min(lagoonLevel, MAX_LAGOON_LEVEL)); // Ensure lagoon level stays within bounds
                }
 
             }
