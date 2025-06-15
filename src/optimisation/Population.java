@@ -12,7 +12,7 @@ import java.util.Comparator;
  * and integration with the NSGA-II algorithm components.
  * 
  * @author Emre Kaygusuz
- * @version 1.0
+ * @version 1.1
  */
 public class Population {
 
@@ -169,6 +169,7 @@ public class Population {
         double minCost = Double.MAX_VALUE;
         double maxCost = Double.MIN_VALUE;
         double sumCost = 0;
+        int validCostCount = 0; // Track individuals with valid costs
 
         for (Individual individual : individuals) {
             double energy = individual.getEnergyOutput();
@@ -182,11 +183,17 @@ public class Population {
                 minCost = Math.min(minCost, cost);
                 maxCost = Math.max(maxCost, cost);
                 sumCost += cost;
+                validCostCount++;
             }
         }
 
         double avgEnergy = sumEnergy / individuals.size();
-        double avgCost = sumCost / individuals.size();
+        double avgCost = (validCostCount > 0) ? sumCost / validCostCount : Double.MAX_VALUE;
+
+        if (validCostCount == 0) {
+            minCost = Double.MAX_VALUE;
+            maxCost = Double.MAX_VALUE; // Indicates no valid costs
+        }
 
         return new PopulationStats(individuals.size(), minEnergy, maxEnergy, avgEnergy, 
                                    minCost, maxCost, avgCost);
