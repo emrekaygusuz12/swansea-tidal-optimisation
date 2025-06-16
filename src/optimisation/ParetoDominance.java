@@ -11,6 +11,8 @@ import java.util.*;
  * - Objective 1: Maximise energy output (MWh) - higher is better
  * - Objective 2: Minimise unit cost (GBP/MWh) - lower is better
  * 
+ * Based on the fast non-dominated sorting algorithm from Deb et al. (2002).
+ * 
  * @author Emre Kaygusuz
  * @version 1.0
  */
