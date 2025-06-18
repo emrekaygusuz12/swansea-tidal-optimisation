@@ -1,11 +1,11 @@
 package src;
 
-import src.model.Lagoon;
+//import src.model.Lagoon;
 import src.model.SimulationConfig;
 
 import src.optimisation.Individual;
 import src.optimisation.IndividualGenerator;
-import src.optimisation.TidalSimulator;
+//import src.optimisation.TidalSimulator;
 import src.optimisation.ObjectiveFunction;
 
 import src.utils.TideDataReader;
