@@ -36,9 +36,11 @@ public class CrowdingDistance {
 
         // Handle edge cases
         if (populationSize == 0) {
-            for (Individual individual : individuals) {
-                individual.setCrowdingDistance(Double.POSITIVE_INFINITY); 
-            }
+            return; // nothing to process
+        }
+
+        if (populationSize == 1) {
+            individuals.get(0).setCrowdingDistance(Double.POSITIVE_INFINITY); // Only one individual, set to infinite distance
             return;
         }
 
@@ -52,6 +54,11 @@ public class CrowdingDistance {
      * @param individuals List of individuals 
      */
     private static void calculateCrowdingDistanceForEnergyObjective(List<Individual> individuals) {
+        // Need at least 2 individuals for meaningful crowding distance
+        if (individuals.size() < 2) {
+            return; // Nothing to do
+        }
+
         // Sort by energy output (ascending order)
         List<Individual> sortedByEnergy = new ArrayList<>(individuals);
         sortedByEnergy.sort(Comparator.comparingDouble(Individual::getEnergyOutput));
@@ -59,6 +66,11 @@ public class CrowdingDistance {
         // Set boundary solutions to infinite distance
         sortedByEnergy.get(0).setCrowdingDistance(Double.POSITIVE_INFINITY);
         sortedByEnergy.get(sortedByEnergy.size() - 1).setCrowdingDistance(Double.POSITIVE_INFINITY);
+
+        // For population of size 2, we're done
+        if (sortedByEnergy.size() == 2) {
+            return; // Only two individuals, both are boundary solutions
+        }
 
         // Calculate range of energy values
         double minEnergy = sortedByEnergy.get(0).getEnergyOutput();
@@ -213,8 +225,8 @@ public class CrowdingDistance {
         calculateCrowdingDistance(individuals);
 
         double minDistance = Double.POSITIVE_INFINITY;
-        double MaxDistance = 0.0;
-        double SumDistance = 0.0;
+        double maxDistance = 0.0;
+        double sumDistance = 0.0;
         int infiniteCount = 0;
 
         for (Individual individual : individuals) {
@@ -224,17 +236,17 @@ public class CrowdingDistance {
                 infiniteCount++;
             } else {
                 minDistance = Math.min(minDistance, distance);
-                MaxDistance = Math.max(MaxDistance, distance);
-                SumDistance += distance;
+                maxDistance = Math.max(maxDistance, distance);
+                sumDistance += distance;
             }
         }
 
         int finiteCount = individuals.size() - infiniteCount;
-        double avgDistance = finiteCount > 0 ? SumDistance / finiteCount : 0.0;
+        double avgDistance = finiteCount > 0 ? sumDistance / finiteCount : 0.0;
 
         return new CrowdingStats(individuals.size(), infiniteCount,
                                  minDistance == Double.POSITIVE_INFINITY ? 0 : minDistance,
-                                 MaxDistance, avgDistance);
+                                 maxDistance, avgDistance);
     }
 
     /**
