@@ -97,7 +97,7 @@ public class NSGA2Config {
                 .mutationType("GAUSSIAN")
                 .halfTides(simParameters.getHalfTides())
                 .simulationDescription(simParameters.getDescription())
-                .convergenceThreshold(0.005)
+                .convergenceThreshold(0.001)
                 .stagnationGenerations(15)
                 .build();
     }
