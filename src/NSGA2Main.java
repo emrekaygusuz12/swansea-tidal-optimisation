@@ -28,7 +28,7 @@ public class NSGA2Main {
     private static final String TIDE_DATA_FILE = "data/b1111463.txt";
 
     public static void main(String[] args) {
-        System.out.println("Starting NSGA-II optimisation for Swansea Bay Tidal Lagoon...");
+        System.out.println("\nStarting NSGA-II optimisation for Swansea Bay Tidal Lagoon...");
 
         try {
             // Parse command Line arguments for configuration selection
@@ -129,7 +129,7 @@ public class NSGA2Main {
      * Runs annual optimisation for tidal lagoon operation.
      */
     private static void runAnnualOptimisation() throws IOException {
-        System.out.println("Running annual optimisation...");
+        System.out.println("\nRunning annual optimisation...");
 
         // Load data and configure
         List<Double> tideData = loadTideData();
@@ -193,7 +193,7 @@ public class NSGA2Main {
                     .filter(ind -> ind.getUnitCost() != Double.MAX_VALUE)
                     .mapToDouble(Individual::getUnitCost).average().orElse(0);
                 
-                System.out.printf("Result: %d solutions, Avg Energy: %.1f MWh, Avg Cost: £%.0f/MWh%n",
+                System.out.printf("Result: %d solutions, Avg Energy: %.1f MWh, Avg Cost: \u00A3%.0f/MWh%n",
                                  paretoFront.size(), avgEnergy, avgCost);
             }
         }
@@ -203,7 +203,7 @@ public class NSGA2Main {
      * Loads tide data from the specified file.
      */
     private static List<Double> loadTideData() throws IOException {
-        System.out.println("Loading tide data...");
+        System.out.println("\nLoading tide data...");
         
         List<Double> tideData = TideDataReader.readTideHeights(TIDE_DATA_FILE);
 
@@ -242,7 +242,7 @@ public class NSGA2Main {
      * Runs NSGA-II optimisation with given configuration.
      */
     private static NSGA2Algorithm.OptimisationResult runOptimisation(NSGA2Config config, List<Double> simulationData) {
-        System.out.println("\n Starting NSGA-II Optimisation...");
+        System.out.println("\nStarting NSGA-II Optimisation...");
         System.out.println(config.getDetailedSummary());
         
         // Validate configuration
@@ -260,8 +260,7 @@ public class NSGA2Main {
      * Analyses and displays optimisation results.
      */
     private static void analyseResults(NSGA2Algorithm.OptimisationResult result) {
-        System.out.println("\n Optimisation Results Analysis");
-        System.out.println("========================================");
+        System.out.println("\n===Optimisation Results Analysis===");
         
         System.out.println(result);
         
@@ -276,6 +275,9 @@ public class NSGA2Main {
         if (!paretoFront.isEmpty()) {
             double minEnergy = paretoFront.stream().mapToDouble(Individual::getEnergyOutput).min().orElse(0);
             double maxEnergy = paretoFront.stream().mapToDouble(Individual::getEnergyOutput).max().orElse(0);
+
+            double minEnergyGWh = minEnergy / 1000; // Convert MWh to GWh
+            double maxEnergyGWh = maxEnergy / 1000; // Convert MWh to GWh
             
             double minCost = paretoFront.stream()
                 .filter(ind -> ind.getUnitCost() != Double.MAX_VALUE)
@@ -284,8 +286,8 @@ public class NSGA2Main {
                 .filter(ind -> ind.getUnitCost() != Double.MAX_VALUE)
                 .mapToDouble(Individual::getUnitCost).max().orElse(0);
             
-            System.out.printf("Energy Range: %.1f - %.1f MWh%n", minEnergy, maxEnergy);
-            System.out.printf("Cost Range: £%.0f - £%.0f per MWh%n", minCost, maxCost);
+            System.out.printf("Energy Range: %.1f - %.1f GWh%n", minEnergyGWh, maxEnergyGWh);
+            System.out.printf("Cost Range: \u00A3%.0f - \u00A3%.0f per MWh%n", minCost, maxCost);
         }
         
         // Convergence analysis
@@ -293,9 +295,9 @@ public class NSGA2Main {
             NSGA2Algorithm.AlgorithmStats firstGen = result.evolutionHistory.get(0);
             NSGA2Algorithm.AlgorithmStats lastGen = result.evolutionHistory.get(result.evolutionHistory.size() - 1);
             
-            System.out.printf("Pareto Front Growth: %d → %d solutions%n",
+            System.out.printf("Pareto Front Growth: %d -> %d solutions%n",
                              firstGen.paretoFrontSize, lastGen.paretoFrontSize);
-            System.out.printf("Hypervolume Improvement: %.2e → %.2e%n",
+            System.out.printf("Hypervolume Improvement: %.2e -> %.2e%n",
                              firstGen.hypervolume, lastGen.hypervolume);
         }
     }
@@ -312,7 +314,7 @@ public class NSGA2Main {
             return;
         }
         
-        System.out.printf("%-8s %-12s %-15s %-10s%n", "Rank", "Energy (MWh)", "Cost (£/MWh)", "Strategy");
+        System.out.printf("%-8s %-12s %-15s %-10s%n", "Rank", "Energy (GWh)", "Cost (\u00A3/MWh)", "Strategy");
         System.out.println("--------------------------------------------------");
         
         // Sort by energy output for display
@@ -321,7 +323,7 @@ public class NSGA2Main {
         for (int i = 0; i < Math.min(10, paretoFront.size()); i++) {
             Individual ind = paretoFront.get(i);
             String costStr = (ind.getUnitCost() == Double.MAX_VALUE) ? "Invalid" : 
-                           String.format("£%.0f", ind.getUnitCost());
+                           String.format("\u00A3%.0f", ind.getUnitCost());
             
             // Show first few control parameters as strategy indicator
             double avgHs = 0, avgHe = 0;
@@ -334,9 +336,9 @@ public class NSGA2Main {
             avgHe /= halfTides;
             
             String strategy = String.format("Hs=%.1f,He=%.1f", avgHs, avgHe);
-            
+            double energyGWh = ind.getEnergyOutput() / 1000.0;
             System.out.printf("%-8d %-12.1f %-15s %-10s%n", 
-                             i + 1, ind.getEnergyOutput(), costStr, strategy);
+                             i + 1, energyGWh, costStr, strategy);
         }
         
         if (paretoFront.size() > 10) {

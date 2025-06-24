@@ -36,7 +36,7 @@ public class NSGA2Config {
     private final long randomSeed;
 
     // Minimum mutation rate to prevent truncation to 0
-    private static final double MIN_MUTATION_RATE = 0.0005;
+    private static final double MIN_MUTATION_RATE = 0.005;
 
 
     private NSGA2Config(Builder builder) {
@@ -113,15 +113,15 @@ public class NSGA2Config {
         double finalMutationRate = Math.max(calculateMutationRate, MIN_MUTATION_RATE);
 
         return new Builder()
-                .populationSize(100)
-                .maxGenerations(200)
-                .crossoverProbability(0.9)
+                .populationSize(200)
+                .maxGenerations(300)
+                .crossoverProbability(0.7)
                 .mutationProbability(finalMutationRate) 
                 .crossoverType("SBX")
                 .mutationType("GAUSSIAN")
                 .halfTides(simParameters.getHalfTides())
                 .simulationDescription(simParameters.getDescription())
-                .convergenceThreshold(0.0001)
+                .convergenceThreshold(0.001)
                 .stagnationGenerations(20)
                 .build();
     }
@@ -137,15 +137,15 @@ public class NSGA2Config {
         double finalMutationRate = Math.max(calculatedMutationRate, MIN_MUTATION_RATE);
 
         return new Builder()
-                .populationSize(200)
-                .maxGenerations(500)
-                .crossoverProbability(0.9)
+                .populationSize(1000)
+                .maxGenerations(2000)
+                .crossoverProbability(0.5)
                 .mutationProbability(finalMutationRate) 
                 .crossoverType("SBX")
                 .mutationType("GAUSSIAN")
                 .halfTides(simParameters.getHalfTides())
                 .simulationDescription(simParameters.getDescription())
-                .convergenceThreshold(0.00005)
+                .convergenceThreshold(0.001)
                 .stagnationGenerations(30)
                 .build();
     }
@@ -265,13 +265,13 @@ public class NSGA2Config {
      */
     public String getDetailedSummary() {
         StringBuilder sb = new StringBuilder();
-        sb.append("=== NSGA-II Configuration ===\n");
+        sb.append("\n===NSGA-II Configuration ===\n");
         sb.append(String.format("Population Size: %d\n", populationSize));
         sb.append(String.format("Max Generations: %d\n", maxGenerations));
-        sb.append(String.format("Crossover: %s (%.2f)\n", crossoverType, crossoverProbability));
-        sb.append(String.format("Mutation: %s (%.4f)\n", mutationType, mutationProbability));
-        sb.append(String.format("Half-tides: %d (%d variables)\n", halfTides, getDecisionVariables()));
-        sb.append(String.format("Simulation: %s\n", simulationDescription));
+        sb.append(String.format("Crossover Type: %s (%.2f)\n", crossoverType, crossoverProbability));
+        sb.append(String.format("Mutation Type: %s (%.4f)\n", mutationType, mutationProbability));
+        sb.append(String.format("Number of half-tides: %d (%d variables)\n", halfTides, getDecisionVariables()));
+        sb.append(String.format("Simulation Type: %s\n", simulationDescription));
         sb.append(String.format("Convergence: %.6f threshold, %d stagnation generations\n", 
                                 convergenceThreshold, stagnationGenerations));
         sb.append(String.format("Computational Effort: %,d evaluations\n", getComputationalEffort()));

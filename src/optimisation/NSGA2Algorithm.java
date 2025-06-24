@@ -66,8 +66,8 @@ public class NSGA2Algorithm {
         this.convergenceAchieved = false;
         this.evolutionHistory = new ArrayList<>();
 
-        System.out.printf("NSGA-II initialised: Population Size: %d," + 
-                             "Max generations: %d, Crossover Probability: %.2f, Mutation Probability: %.2f%n",
+        System.out.printf("NSGA-II initialised with\n \nPopulation Size: %d" + 
+                             "\nMax generations: %d \nCrossover Probability: %.2f \nMutation Probability: %.2f%n",
                 populationSize, maxGenerations, crossoverProbability, mutationProbability);
     }
 
@@ -80,7 +80,7 @@ public class NSGA2Algorithm {
     public OptimisationResult optimise() {
         long startTime = System.currentTimeMillis();
 
-        System.out.println("\n Starting NSGA-II optimisation...");
+        System.out.println("\nStarting NSGA-II optimisation...\n");
 
         // Step 1: Initialise population
         initialisePopulation();

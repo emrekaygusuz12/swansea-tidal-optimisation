@@ -14,7 +14,7 @@ public class SimulationConfig {
      // Temporal configuration
     private static final int HALF_TIDES_PER_DAY = 4;
     private static final int READINGS_PER_HALF_TIDE = 24;
-    private static final double TIME_STEP_HOURS = 0.25 / 24; // ~0.01 hours per reading
+    private static final double TIME_STEP_HOURS = 0.25; // ~0.01 hours per reading
     
     // Predefined simulation scenarios
     private static final int TEST_HALF_TIDES = 48;           // 12 hours
@@ -41,7 +41,7 @@ public class SimulationConfig {
     }
     
     public static SimulationParameters getAnnualConfiguration() {
-        return new SimulationParameters(ANNUAL_HALF_TIDES, "Annual optimization");
+        return new SimulationParameters(ANNUAL_HALF_TIDES, "Annual (365 days)");
     }
     
     // Utility methods

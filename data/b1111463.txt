@@ -10,7 +10,8 @@
 //<subject>SDN:LOCAL:HTSeaLvl</subject><object>SDN:P01::ASLVBH01</object><units>SDN:P06::ULAA</units>
 //
 Cruise	Station	Type	yyyy-mm-ddThh:mm:ss	Longitude [degrees_east]	Latitude [degrees_north]	LOCAL_CDI_ID	EDMO_code	Bot. Depth [m]	Chronological Julian Date [days]	QV:SEADATANET	SeaLvl_bubbler [m]	QV:SEADATANET	SeaLvl_bubbler2 [m]	QV:SEADATANET	HTSeaLvl [m]	QV:SEADATANET
-unspecified	932/2011/001	*	2011-01-01T00:00:00	-3.9754	51.57	1111463	43		2455563.000000	1	  4.677	1	  4.679	1	  5.153	1
+unspecified	932/2011/001	*	2011-01-01T00:00:00	-3.9754	51.57	1111463	43		
+									2455563.000000	1	  4.677	1	  4.679	1	  5.153	1
 									2455563.010417	1	  5.036	1	  5.037	1	  5.170	1
 									2455563.020833	1	  5.411	1	  5.411	1	  5.447	1
 									2455563.031250	1	  5.776	1	  5.775	1	  5.809	1
