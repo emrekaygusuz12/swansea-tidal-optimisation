@@ -10,7 +10,7 @@ import java.util.Arrays;
  * for different optimisation scenarios (testing, daily, weekly, annual)
  * 
  * @author Emre Kaygusuz
- * @version 1.0
+ * @version 1.1 - Fixed mutation rate calculation with minimum threshold.
  */
 public class NSGA2Config {
 
@@ -34,6 +34,9 @@ public class NSGA2Config {
     private final int tournamentSize;
     private final boolean useElitism;
     private final long randomSeed;
+
+    // Minimum mutation rate to prevent truncation to 0
+    private static final double MIN_MUTATION_RATE = 0.0005;
 
 
     private NSGA2Config(Builder builder) {
@@ -66,7 +69,7 @@ public class NSGA2Config {
                 .crossoverProbability(0.9)
                 .mutationProbability(0.1)
                 .crossoverType("SBX")
-                .mutationType("POLYNOMIAL")
+                .mutationType("GAUSSIAN")
                 .halfTides(simParameters.getHalfTides())
                 .simulationDescription(simParameters.getDescription())
                 .convergenceThreshold(0.001)
@@ -81,13 +84,17 @@ public class NSGA2Config {
     public static NSGA2Config getDailyConfig() {
         SimulationConfig.SimulationParameters simParameters = SimulationConfig.getDailyConfiguration();
 
+        // Calculate mutation rate with minimum threshold
+        double calculateMutationRate = 1.0 / (simParameters.getHalfTides() * 2);
+        double finalMutationRate = Math.max(calculateMutationRate, MIN_MUTATION_RATE);
+
         return new Builder()
                 .populationSize(50)
                 .maxGenerations(100)
                 .crossoverProbability(0.9)
-                .mutationProbability(0.1 / (simParameters.getHalfTides() * 2)) // 1/n_variables
+                .mutationProbability(finalMutationRate) 
                 .crossoverType("SBX")
-                .mutationType("POLYNOMIAL")
+                .mutationType("GAUSSIAN")
                 .halfTides(simParameters.getHalfTides())
                 .simulationDescription(simParameters.getDescription())
                 .convergenceThreshold(0.005)
@@ -102,13 +109,16 @@ public class NSGA2Config {
     public static NSGA2Config getWeeklyConfig() {
         SimulationConfig.SimulationParameters simParameters = SimulationConfig.getWeeklyConfiguration();
 
+        double calculateMutationRate = 1.0 / (simParameters.getHalfTides() * 2);
+        double finalMutationRate = Math.max(calculateMutationRate, MIN_MUTATION_RATE);
+
         return new Builder()
                 .populationSize(100)
                 .maxGenerations(200)
                 .crossoverProbability(0.9)
-                .mutationProbability(0.1 / (simParameters.getHalfTides() * 2)) 
+                .mutationProbability(finalMutationRate) 
                 .crossoverType("SBX")
-                .mutationType("POLYNOMIAL")
+                .mutationType("GAUSSIAN")
                 .halfTides(simParameters.getHalfTides())
                 .simulationDescription(simParameters.getDescription())
                 .convergenceThreshold(0.0001)
@@ -123,13 +133,16 @@ public class NSGA2Config {
     public static NSGA2Config getAnnualConfig() {
         SimulationConfig.SimulationParameters simParameters = SimulationConfig.getAnnualConfiguration();
 
+        double calculatedMutationRate = 1.0 / (simParameters.getHalfTides() * 2);
+        double finalMutationRate = Math.max(calculatedMutationRate, MIN_MUTATION_RATE);
+
         return new Builder()
                 .populationSize(200)
                 .maxGenerations(500)
                 .crossoverProbability(0.9)
-                .mutationProbability(0.1 / (simParameters.getHalfTides() * 2)) 
+                .mutationProbability(finalMutationRate) 
                 .crossoverType("SBX")
-                .mutationType("POLYNOMIAL")
+                .mutationType("GAUSSIAN")
                 .halfTides(simParameters.getHalfTides())
                 .simulationDescription(simParameters.getDescription())
                 .convergenceThreshold(0.00005)
@@ -144,13 +157,16 @@ public class NSGA2Config {
     public static NSGA2Config getResearchConfig() {
         SimulationConfig.SimulationParameters simParameters = SimulationConfig.getAnnualConfiguration();
 
+        double calculatedMutationRate = 1.0 / (simParameters.getHalfTides() * 2);
+        double finalMutationRate = Math.max(calculatedMutationRate, MIN_MUTATION_RATE);
+
         return new Builder()
                 .populationSize(500)
                 .maxGenerations(1000)
                 .crossoverProbability(0.9)
-                .mutationProbability(0.1 / (simParameters.getHalfTides() * 2)) 
+                .mutationProbability(finalMutationRate) 
                 .crossoverType("SBX")
-                .mutationType("POLYNOMIAL")
+                .mutationType("GAUSSIAN")
                 .halfTides(simParameters.getHalfTides())
                 .simulationDescription("Research Configuration - annual optimisation")
                 .convergenceThreshold(0.00001)
@@ -274,7 +290,7 @@ public class NSGA2Config {
         private double crossoverProbability = 0.9;
         private double mutationProbability = 0.1;
         private String crossoverType = "SBX";
-        private String mutationType = "POLYNOMIAL";
+        private String mutationType = "GAUSSIAN"; 
         private String simulationDescription = "Custom Configuration";
         private double convergenceThreshold = 0.001;
         private int stagnationGenerations = 15;
