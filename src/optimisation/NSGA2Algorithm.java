@@ -44,6 +44,9 @@ public class NSGA2Algorithm {
     private boolean convergenceAchieved;
     private final double convergenceThreshold;
     private final int stagnationGenerations;
+
+    // Convergence tracker
+    private ConvergenceTracker convergenceTracker;
     
 
     /**
@@ -58,6 +61,11 @@ public class NSGA2Algorithm {
         this.mutationType = config.getMutationType();
         this.convergenceThreshold = config.getConvergenceThreshold();
         this.stagnationGenerations = config.getStagnationGenerations();
+
+        this.convergenceTracker = new ConvergenceTracker(
+            config.getStagnationGenerations(),
+            config.getConvergenceThreshold()
+        );
 
         this.tideData = new ArrayList<>(tideData);
         this.halfTides = config.getHalfTides();
@@ -85,12 +93,23 @@ public class NSGA2Algorithm {
         // Step 1: Initialise population
         initialisePopulation();
 
+        for (int i = 0; i < populationSize; i++) {
+            double[] decisionVariables = currentPopulation.getIndividual(i).getDecisionVariables();
+            System.out.printf("Individual %d: %s%n", i + 1, Arrays.toString(decisionVariables));
+        }
+
         // Step 2: Evaluate initial population
         evaluatePopulation(currentPopulation);
+
+        // convergence step
+        recordInitialGeneration();
 
         // Step 3: Main optimisation loop
         while (!isTerminationCriteriaMet()) {
             executeGeneration();
+
+            // convergence step
+            trackConvergence();
 
             // log progress every 10 generations
             if (currentGeneration % 10 == 0) {
@@ -111,18 +130,145 @@ public class NSGA2Algorithm {
             convergenceAchieved
         );
 
+        printFinalConvergenceAnalysis(executionTime);
+
         System.out.printf("Optimisation completed in %.2f seconds after %d generations%n",
                 executionTime, currentGeneration);
         return result;
+    }
+
+    /**
+     * Records the initial generation for convergence baseline.
+     */
+    private void recordInitialGeneration() {
+        List<Individual> paretoFront = ParetoDominance.getParetoFront(currentPopulation);
+        double hypervolume = calculateHypervolume(paretoFront);
+
+        printDetailedParetoFront(currentGeneration, paretoFront);
+        
+        // Record initial state (generation 0)
+        convergenceTracker.recordGeneration(0, paretoFront, hypervolume);
+        
+        // Record generation stats for evolution history
+        recordGenerationStats();
+    }
+
+    /**
+     * Tracks convergence after each generation and updates convergence status.
+     */
+    private void trackConvergence() {
+        List<Individual> paretoFront = ParetoDominance.getParetoFront(currentPopulation);
+        double hypervolume = calculateHypervolume(paretoFront);
+        
+        // Check convergence using the tracker
+        boolean hasConverged = convergenceTracker.recordGeneration(
+            currentGeneration, 
+            paretoFront, 
+            hypervolume
+        );
+        
+        // Update convergence status
+        if (hasConverged && !convergenceAchieved) {
+            convergenceAchieved = true;
+            System.out.println("\n" + convergenceTracker.getConvergenceSummary());
+        }
+        
+        // Record generation stats for evolution history
+        recordGenerationStats();
+    }
+
+     /**
+     * Enhanced termination criteria that includes convergence tracking.
+     */
+    private boolean isTerminationCriteriaMet() {
+        // Check maximum generations
+        if (currentGeneration >= maxGenerations) {
+            System.out.printf("Maximum generations (%d) reached%n", maxGenerations);
+            return true;
+        }
+        
+        // Check convergence from tracker
+        if (convergenceAchieved) {
+            return true;
+        }
+        
+        // Add any other termination criteria you have
+        return false;
     }
 
     private void initialisePopulation() {
         System.out.println("Initialising population...");
         currentPopulation = new Population(populationSize);
         currentPopulation.initialiseRandom(populationSize, halfTides);
-        
+
         System.out.printf("Initalised population: %d individuals with %d half tides each%n",
                 populationSize, halfTides);
+    }
+
+    /**
+     * Prints detailed information about all Pareto front solutions.
+     */
+    private void printDetailedParetoFront(int generation, List<Individual> paretoFront) {
+        System.out.printf("\n=== DETAILED PARETO FRONT - Generation %d ===\n", generation);
+        System.out.printf("Pareto Front Size: %d solutions\n", paretoFront.size());
+        
+        if (paretoFront.isEmpty()) {
+            System.out.println("No Pareto front solutions found.");
+            return;
+        }
+        
+        // Header
+        System.out.printf("%-4s %-12s %-12s %-10s %-25s\n", 
+                        "Rank", "Energy(MWh)", "Impact", "HeadRange", "Sample Strategy");
+        System.out.println("─".repeat(80));
+        
+        // Sort by energy for better readability
+        List<Individual> sorted = new ArrayList<>(paretoFront);
+        sorted.sort((a, b) -> Double.compare(b.getEnergyOutput(), a.getEnergyOutput())); // Descending energy
+        
+        for (int i = 0; i < sorted.size(); i++) {
+            Individual ind = sorted.get(i);
+            
+            // Calculate head range for this individual
+            double minHead = Double.MAX_VALUE, maxHead = Double.MIN_VALUE;
+            int halfTides = ind.getDecisionVariables().length / 2;
+            
+            for (int j = 0; j < halfTides; j++) {
+                double hs = ind.getStartHead(j);
+                double he = ind.getEndHead(j);
+                minHead = Math.min(minHead, Math.min(hs, he));
+                maxHead = Math.max(maxHead, Math.max(hs, he));
+            }
+            
+            // Sample strategy (first 3 half-tides)
+            StringBuilder strategy = new StringBuilder();
+            for (int j = 0; j < Math.min(3, halfTides); j++) {
+                strategy.append(String.format("(%.2f,%.2f)", 
+                            ind.getStartHead(j), ind.getEndHead(j)));
+                if (j < Math.min(2, halfTides - 1)) strategy.append(" ");
+            }
+            if (halfTides > 3) strategy.append("...");
+            
+            System.out.printf("%-4d %-12.1f %-12.6f %-10s %-25s\n",
+                            i + 1,
+                            ind.getEnergyOutput(),
+                            ind.getUnitCost(),
+                            String.format("%.2f-%.2f", minHead, maxHead),
+                            strategy.toString());
+        }
+        
+        // Summary statistics
+        double minEnergy = sorted.stream().mapToDouble(Individual::getEnergyOutput).min().orElse(0);
+        double maxEnergy = sorted.stream().mapToDouble(Individual::getEnergyOutput).max().orElse(0);
+        double minImpact = sorted.stream().mapToDouble(Individual::getUnitCost).min().orElse(0);
+        double maxImpact = sorted.stream().mapToDouble(Individual::getUnitCost).max().orElse(0);
+        
+        System.out.println("─".repeat(80));
+        System.out.printf("Energy range: %.1f - %.1f MWh (Δ=%.1f)\n", 
+                        minEnergy, maxEnergy, maxEnergy - minEnergy);
+        System.out.printf("Impact range: %.6f - %.6f (Δ=%.6f)\n", 
+                        minImpact, maxImpact, maxImpact - minImpact);
+        System.out.println("-".repeat(80) + "\n");
     }
 
     /*
@@ -192,7 +338,7 @@ public class NSGA2Algorithm {
         recordGenerationStats();
 
         // Step 10: Check convergence
-        checkConvergence();
+        //checkConvergence();
     }
 
 
@@ -221,26 +367,26 @@ public class NSGA2Algorithm {
     }
 
 
-    /*
-     * Checks if termination criteria are met.
-     */
-    private void checkConvergence() {
-        if (evolutionHistory.size() < stagnationGenerations) {
-            return; // Not enough data to determine convergence
-        }
+    // /*
+    //  * Checks if termination criteria are met.
+    //  */
+    // private void checkConvergence() {
+    //     if (evolutionHistory.size() < stagnationGenerations) {
+    //         return; // Not enough data to determine convergence
+    //     }
 
-        // Check if hypervolume has improved in last N generations
-        double currentHypervolume = evolutionHistory.get(evolutionHistory.size() - 1).hypervolume;
-        double previousHypervolume = evolutionHistory.get(evolutionHistory.size() - stagnationGenerations).hypervolume;
+    //     // Check if hypervolume has improved in last N generations
+    //     double currentHypervolume = evolutionHistory.get(evolutionHistory.size() - 1).hypervolume;
+    //     double previousHypervolume = evolutionHistory.get(evolutionHistory.size() - stagnationGenerations).hypervolume;
 
-        double improvement = (currentHypervolume - previousHypervolume) / previousHypervolume;
+    //     double improvement = (currentHypervolume - previousHypervolume) / previousHypervolume;
 
-        if (improvement < convergenceThreshold) {
-            convergenceAchieved = true;
-            System.out.printf("Convergence achieved: %.6f improvement in last %d generations%n",
-                    improvement, stagnationGenerations);
-        }
-    }
+    //     if (improvement < convergenceThreshold) {
+    //         convergenceAchieved = true;
+    //         System.out.printf("Convergence achieved: %.6f improvement in last %d generations%n",
+    //                 improvement, stagnationGenerations);
+    //     }
+    // }
 
 
     /*
@@ -253,10 +399,7 @@ public class NSGA2Algorithm {
 
         // Reference point (worst possible values)
         double refEnergy = 0.0;
-        double refCost = paretoFront.stream()
-            .filter(ind -> ind.getUnitCost() != Double.MAX_VALUE)
-            .mapToDouble(Individual::getUnitCost)
-            .max().orElse(1000000.0) * 1.1; // 10% above max cost
+        double refCost = 100000.0;
         
         // Simple 2D hypervolume calculation
         List<Individual> sortedFront = new ArrayList<>(paretoFront);
@@ -266,7 +409,7 @@ public class NSGA2Algorithm {
         double prevEnergy = refEnergy;
 
         for (Individual ind : sortedFront) {
-            if (ind.getUnitCost() != Double.MAX_VALUE) {
+            if (ind.getUnitCost() != Double.MAX_VALUE && ind.getUnitCost() < refCost) {
                 double width = ind.getEnergyOutput() - prevEnergy;
                 double height = refCost - ind.getUnitCost();
                 hypervolume += width * height;
@@ -318,18 +461,18 @@ public class NSGA2Algorithm {
     }
 
 
-    /**
-     * Checks if termination criteria are met.
-     * 
-     * Criteria:
-     * - Maximum generations reached
-     * - Convergence achieved based on hypervolume improvement
-     * 
-     * @return true if termination criteria are met, false otherwise
-     */
-    private boolean isTerminationCriteriaMet() {
-        return currentGeneration >= maxGenerations || convergenceAchieved;
-    }
+    // /**
+    //  * Checks if termination criteria are met.
+    //  * 
+    //  * Criteria:
+    //  * - Maximum generations reached
+    //  * - Convergence achieved based on hypervolume improvement
+    //  * 
+    //  * @return true if termination criteria are met, false otherwise
+    //  */
+    // private boolean isTerminationCriteriaMet() {
+    //     return currentGeneration >= maxGenerations || convergenceAchieved;
+    // }
 
 
     /*
@@ -353,6 +496,71 @@ public class NSGA2Algorithm {
                 popStats.minCost,
                 stats.hypervolume
         );
+
+        if (currentGeneration % 1 == 0) {
+            List<Individual> paretoFront = ParetoDominance.getParetoFront(currentPopulation);
+            printDetailedParetoFront(currentGeneration, paretoFront);
+            printConvergenceStatus();
+            System.exit(0); // Exit after printing detailed status
+        }
+    }
+
+    /**
+     * Prints current convergence status.
+     */
+    private void printConvergenceStatus() {
+        ConvergenceTracker.ConvergenceSummary summary = convergenceTracker.getConvergenceSummary();
+        
+        if (summary.converged) {
+            System.out.println("STATUS: Converged - " + summary.reason);
+        } else {
+            // Show progress indicators
+            if (summary.firstGeneration != null && summary.lastGeneration != null) {
+                double energyImprovement = summary.lastGeneration.maxEnergy - summary.firstGeneration.maxEnergy;
+                double costImprovement = summary.firstGeneration.minCost - summary.lastGeneration.minCost;
+                
+                System.out.printf("STATUS: Optimizing - Energy +%.1f MWh, Cost -£%.0f/MWh since start%n",
+                                energyImprovement, costImprovement);
+            }
+        }
+    }
+
+     /**
+     * Prints comprehensive final convergence analysis.
+     */
+    private void printFinalConvergenceAnalysis(double executionTime) {
+        System.out.printf("Optimisation completed in %.2f seconds after %d generations%n",
+                executionTime, currentGeneration);
+
+        List<Individual> paretoFront = ParetoDominance.getParetoFront(currentPopulation);
+        printDetailedParetoFront(currentGeneration, paretoFront);
+        
+        System.out.println("\n=== DETAILED CONVERGENCE ANALYSIS ===");
+        ConvergenceTracker.ConvergenceSummary summary = convergenceTracker.getConvergenceSummary();
+        System.out.println(summary);
+        
+        if (summary.converged) {
+            double generationsToConvergence = summary.convergenceGeneration;
+            double convergenceEfficiency = (generationsToConvergence / currentGeneration) * 100;
+            
+            System.out.printf("Convergence efficiency: %.1f%% (converged at generation %d of %d)%n",
+                            convergenceEfficiency, summary.convergenceGeneration, currentGeneration);
+        } else {
+            System.out.println("Algorithm terminated before convergence - consider increasing max generations");
+        }
+        
+        // Print optimization trajectory
+        if (summary.firstGeneration != null && summary.lastGeneration != null) {
+            System.out.println("\n=== OPTIMIZATION TRAJECTORY ===");
+            System.out.printf("Initial: Energy %.1f GWh, Cost £%.0f/MWh, PF %d solutions%n",
+                            summary.firstGeneration.maxEnergy / 1000.0,
+                            summary.firstGeneration.minCost,
+                            summary.firstGeneration.paretoSize);
+            System.out.printf("Final:   Energy %.1f GWh, Cost £%.0f/MWh, PF %d solutions%n",
+                            summary.lastGeneration.maxEnergy / 1000.0,
+                            summary.lastGeneration.minCost,
+                            summary.lastGeneration.paretoSize);
+        }
     }
 
 

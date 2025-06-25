@@ -23,16 +23,16 @@ public class GeneticOperators {
     private static final double MAX_HEAD = 4.0; // Maximum head value in meters
 
     // Crossover parameters
-    private static final double SBX_ETA = 20.0; // Distribution index for Simulated Binary Crossover (SBX)
+    private static final double SBX_ETA = 1.0; // Distribution index for Simulated Binary Crossover (SBX) - Lower value for more exploration
 
     // Mutation parameters
-    private static final double MUTATION_ETA = 20.0; // Distribution index for polynomial mutation
+    private static final double MUTATION_ETA = 20; // Distribution index for polynomial mutation
 
     public static class OperatorConfig{
         public static final double DEFAULT_PERTURBATION_RANGE = 0.5; // Default range for mutation perturbation
         public static final double DEFAULT_STRATEGY_THRESHOLD = 0.7; // Default threshold for operational mutation strategy
         public static final double DEFAULT_DIFFERENCE_STRENGTH = 0.2; // Default strength for difference adjustment in operational mutation
-        public static final double DEFAULT_GAUSSIAN_STRENGTH = 0.1; // Default standard deviation for Gaussian mutation
+        public static final double DEFAULT_GAUSSIAN_STRENGTH = 0.77; // Default standard deviation for Gaussian mutation
     }
 
     public static Individual[] simulatedBinaryCrossover(Individual parent1, Individual parent2,
@@ -259,25 +259,57 @@ public class GeneticOperators {
      * @param mutationStrength    Standard deviation of the Gaussian noise
      * @return The mutated individual
      */
-    public static Individual gaussianMutation(Individual individual, double mutationProbability,
-            double mutationStrength) {
+    public static Individual gaussianMutation(Individual individual, double mutationProbability, double mutationStrength) {
         double[] vars = individual.getDecisionVariables().clone();
+        //double rangeSize = MAX_HEAD - MIN_HEAD; // 7.7m
 
         for (int i = 0; i < vars.length; i++) {
             if (threadLocalRandom.get().nextDouble() <= mutationProbability) {
+                double currentValue = vars[i];
+                
+                // Adaptive mutation strength based on range size
+                //mutationStrength = rangeSize * 0.5; // 10% of the range size
+
+                // If value is near boundaries, use strong mutation to escape
+                double distanceFromBounds = Math.min(currentValue - MIN_HEAD, MAX_HEAD - currentValue);
+                double adaptiveStrength = mutationStrength;
+
+                // Increase mutation strength if too close to boundaries 
+                double rangePadding = (MAX_HEAD - MIN_HEAD) * 0.2; 
+                if (distanceFromBounds < rangePadding) {
+                    adaptiveStrength *= 2.0; // Increase mutation strength near boundaries
+                }
+
+
+
                 // Generate Gaussian noise
                 double noise = threadLocalRandom.get().nextGaussian() * mutationStrength;
+                double newValue = currentValue + noise;
+
+                newValue = Math.max(MIN_HEAD, Math.min(MAX_HEAD, newValue)); // Clamp to bounds
+
+                if ((newValue <= MIN_HEAD + 0.1 || newValue >= MAX_HEAD - 0.1) && threadLocalRandom.get().nextDouble() < 0.05) {
+                    // Reflect below lower bound or above upper bound with 50% chance
+                    vars[i] = MIN_HEAD + threadLocalRandom.get().nextDouble() * (MAX_HEAD - MIN_HEAD);
+                } else {
+                    vars[i] = newValue; // Apply new value if not reflecting
+                }
+
+                //if (currentValue <= MIN_HEAD + 0.1) && threadLocalRandom.get().nextDouble())
+
+                // if (newValue < MIN_HEAD) {
+                //     newValue = MIN_HEAD + (MIN_HEAD - newValue); // Reflect below lower bound
+                //     if (newValue > MAX_HEAD) 
+                //         newValue = MAX_HEAD; // Clamp to upper bound if reflected value exceeds it
+                //     } else if (newValue > MAX_HEAD) {
+                //     newValue = MAX_HEAD - (newValue - MAX_HEAD); // Reflect above upper bound
+                //     if (newValue < MIN_HEAD) 
+                //         newValue = MIN_HEAD; // Clamp to lower bound if reflected value exceeds it
+                // }
 
                 // Apply mutation
-                vars[i] += noise;
+                vars[i] = newValue;
 
-                // Apply constraints using the validateHeadValue method
-                try {
-                    validateHeadValue(vars[i], "Variable[" + i + "]");
-                } catch (IllegalArgumentException e) {
-                    // If validation fails, clamp the bounds
-                    vars[i] = Math.max(MIN_HEAD, Math.min(MAX_HEAD, vars[i]));
-                }
             }
         }
 
@@ -395,7 +427,8 @@ public class GeneticOperators {
                         mutatedChild = polynomialMutation(child, mutationProbability);
                         break;
                     case "GAUSSIAN":
-                        mutatedChild = gaussianMutation(child, mutationProbability, 0.1); // Example strength
+                        double enhancedMutationStrength = (MAX_HEAD - MIN_HEAD) * 0.75; // 10% of the range
+                        mutatedChild = gaussianMutation(child, mutationProbability, enhancedMutationStrength);
                         break;
                     case "OPERATIONAL":
                         mutatedChild = operationalMutation(child, mutationProbability);

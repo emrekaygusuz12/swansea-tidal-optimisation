@@ -5,7 +5,7 @@ import java.util.Random;
 
 /**
  * Utility class for generating individuals with randomised control parameters.
- * Each individual represents a candidate solution to the optimisation problem.
+ * Each individual represents a candidate solution to the optimisation problem
  * using the NSGA-II algorithm. This class generates feasible starting values for:
  * 
  * * - Hs (starting head)
@@ -37,10 +37,9 @@ public class IndividualGenerator {
         Individual individual = new Individual(numberOfHalfTides);
         
         for (int i = 0; i < numberOfHalfTides; i++) {
-            // Generate random Hs and He values within the defined range
-            double hs = Individual.getMinHead() + (Individual.getMaxHead() - Individual.getMinHead()) * RANDOM.nextDouble();
-            double he = Individual.getMinHead() + (Individual.getMaxHead() - Individual.getMinHead()) * RANDOM.nextDouble();
-            
+            // Generate random Hs and He values within the defined range [0.5, 4.0]
+            double hs = 3.5 * RANDOM.nextDouble() + 0.5;
+            double he = 3.5 * RANDOM.nextDouble() + 0.5;
             // Set the decision variables for this half-tide
             individual.setStartHead(i, hs); // Hs
             individual.setEndHead(i, he); // He
