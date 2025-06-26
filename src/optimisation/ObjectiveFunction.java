@@ -56,7 +56,7 @@ public class ObjectiveFunction {
      */
     private static int calculateSimulationHours(Individual individual) {
         int halfTides = individual.getDecisionVariables().length / 2; // Each decision variable represents a half tide
-        return halfTides * 12; // 12 hours per half tide
+        return (int) (halfTides * 6.12); // 12 hours per half tide
     }
 
 
@@ -85,10 +85,10 @@ public class ObjectiveFunction {
         }
 
         // Drastically reduce capital cost component
-        double baseCapitalCost = Lagoon.getTotalCapitalCost() / (annualEnergyOutput * 200.0);
+        double baseCapitalCost = Lagoon.getTotalCapitalCost() / (annualEnergyOutput * 500.0);
 
         // Calculate average head across all half-tides
-        double avgHead = 0;
+        double avgHead = calculateAverageHead(individual);
         int halfTides = individual.getDecisionVariables().length / 2;
         for (int i = 0; i < halfTides; i++) {
             avgHead += individual.getStartHead(i) + individual.getEndHead(i);
@@ -96,12 +96,36 @@ public class ObjectiveFunction {
         avgHead /= (halfTides * 2);
 
         // AGGRESSIVE operational penalty that increases dramatically with energy
-        double operationalPenalty = Math.pow(avgHead, 2.5) * 3000.0;
+        double operationalPenalty = Math.pow(avgHead, 2.0) * 200.0;
         
         // Energy-dependent penalty that creates strong trade-off
-        double energyPenalty = Math.pow(annualEnergyOutput / 22000.0, 1.8) * 6000.0;
+        double energyPenalty = Math.pow(annualEnergyOutput / 400000.0, 1.5) * 1000.0;
 
         return baseCapitalCost + operationalPenalty + energyPenalty;
+    }
+
+    private static double calculateAverageHead(Individual individual) {
+        double avgHead = 0;
+        int halfTides = individual.getDecisionVariables().length / 2;
+        for (int i = 0; i < halfTides; i++) {
+            avgHead += individual.getStartHead(i) + individual.getEndHead(i);
+        }
+        return avgHead / (halfTides * 2);
+    }
+
+    private static void validateEnergyOutput(double annualEnergyOutput) {
+        double expectedMinOutput = 400.0 * 1000;
+        double expectedMaxOutput = 800.0 * 1000;
+        
+        if (annualEnergyOutput < expectedMinOutput) {
+        System.err.printf("WARNING: Energy output %.1f MWh is below expected minimum %.1f MWh%n", 
+                         annualEnergyOutput, expectedMinOutput);
+        }
+    
+        if (annualEnergyOutput > expectedMaxOutput) {
+        System.err.printf("WARNING: Energy output %.1f MWh exceeds expected maximum %.1f MWh%n", 
+                         annualEnergyOutput, expectedMaxOutput);
+    }
     }
 
     /**

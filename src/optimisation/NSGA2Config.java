@@ -91,14 +91,14 @@ public class NSGA2Config {
         return new Builder()
                 .populationSize(200)
                 .maxGenerations(500)
-                .crossoverProbability(0.80)
-                .mutationProbability(finalMutationRate) 
+                .crossoverProbability(0.70)
+                .mutationProbability(0.15) 
                 .crossoverType("SBX")
                 .mutationType("GAUSSIAN")
                 .halfTides(simParameters.getHalfTides())
                 .simulationDescription(simParameters.getDescription())
-                .convergenceThreshold(0.001)
-                .stagnationGenerations(50)
+                .convergenceThreshold(0.005)
+                .stagnationGenerations(25)
                 .build();
     }
 
@@ -139,16 +139,16 @@ public class NSGA2Config {
         double finalMutationRate = Math.max(calculateMutationRate, MIN_MUTATION_RATE);
 
         return new Builder()
-                .populationSize(1000)
-                .maxGenerations(1500)
-                .crossoverProbability(0.80)
-                .mutationProbability(finalMutationRate) 
+                .populationSize(800)
+                .maxGenerations(200)
+                .crossoverProbability(0.8)
+                .mutationProbability(0.05) 
                 .crossoverType("SBX")
                 .mutationType("GAUSSIAN")
                 .halfTides(simParameters.getHalfTides())
                 .simulationDescription(simParameters.getDescription())
                 .convergenceThreshold(0.001)
-                .stagnationGenerations(200)
+                .stagnationGenerations(50)
                 .build();
     }
 

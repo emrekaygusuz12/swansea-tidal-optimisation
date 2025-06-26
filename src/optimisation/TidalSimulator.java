@@ -23,7 +23,7 @@ public class TidalSimulator {
     private static final double WATTS_TO_MW = 1e-6; // Conversion factor from Watts to MW (1,000,000 W = 1 MW)
     private static final double GRAVITY = 9.81; // Acceleration due to gravity in m/s^2
     private static final double WATER_DENSITY = 1025.0; // Density of water in kg/m^3
-    private static final double TIME_STEP_HOURS = 0.25 / 24; // Time step in hours (15 minutes)
+    private static final double TIME_STEP_HOURS = 0.25; // Time step in hours (15 minutes)
     private static final double TIME_STEP_SECONDS = TIME_STEP_HOURS * 3600; // Convert hours to seconds
 
     private static final double MIN_LAGOON_LEVEL = -5.0; // Minimum lagoon level in meters
@@ -47,6 +47,14 @@ public class TidalSimulator {
         int halfTideCount = individual.getDecisionVariables().length / 2; // Each half-tide has two control parameters (Hs and He)
 
         int stepPerHalfTide = tideHeights.size() / halfTideCount; // Number of steps per half-tide
+
+        // Debug tracking variables
+        int totalTimeSteps = 0;
+        int turbineActiveSteps = 0;
+        double totalPowerGenerated = 0.0;
+        double maxPowerSeen = 0.0;
+        double totalHeadDifferenceWhenActive = 0.0;
+        int activeStepsWithPower = 0;
 
         for (int i = 0; i < halfTideCount; i++) {
             double Hs = individual.getStartHead(i); // Starting head for half-tide i
@@ -79,7 +87,8 @@ public class TidalSimulator {
                     turbineOn = false; // Deactivate the turbine if head difference exceeds He
                }
 
-               if (turbineOn && headDifference > 0) { 
+               if (turbineOn && headDifference > 0) {
+                    turbineActiveSteps++; 
 
                     // Calculate theoretical flow rate using orifice equation: Q = A * sqrt(2gh)
                     // where A is the area of the turbine, g is gravity, and h is the head difference
@@ -90,11 +99,20 @@ public class TidalSimulator {
                     double actualFlow = theoreticalFlow * dischargeCoefficient; // Adjust flow rate for efficiency
 
                     // Calculate power using: P = water density * g * Q * h * efficiency
-                    double powerMW = actualFlow * WATER_DENSITY * GRAVITY * headDifference * WATTS_TO_MW; 
+                    double powerWatts = actualFlow * WATER_DENSITY * GRAVITY * headDifference; // Power in Watts
+                    double powerMW = powerWatts * WATTS_TO_MW; 
                     
                     // Limit power to installed capacity
                     double maxPowerMW = Lagoon.getInstalledCapacityMW();
                     powerMW = Math.min(powerMW, maxPowerMW); // Limit power to installed capacity
+
+                    // Debug
+                    if (powerMW > 0){
+                        totalPowerGenerated += powerMW; // Accumulate total power generated
+                        maxPowerSeen = Math.max(maxPowerSeen, powerMW); // Track maximum power seen
+                        totalHeadDifferenceWhenActive += headDifference; // Accumulate head difference when turbine is active
+                        activeStepsWithPower++; // Count steps where turbine was active and generated power
+                    }
 
                     // Calculate energy for this time step
                     double energy = powerMW * TIME_STEP_HOURS; // Energy in MWh
@@ -121,6 +139,27 @@ public class TidalSimulator {
 
             }
         }
+
+        // CALCULATE DEBUG METRICS
+        double turbineActivePercent = (totalTimeSteps > 0) ? 
+            (100.0 * turbineActiveSteps) / totalTimeSteps : 0.0;
+        
+        double avgPowerWhenActive = (activeStepsWithPower > 0) ? 
+            totalPowerGenerated / activeStepsWithPower : 0.0;
+        
+        double avgHeadWhenActive = (activeStepsWithPower > 0) ? 
+            totalHeadDifferenceWhenActive / activeStepsWithPower : 0.0;
+
+         // DEBUG OUTPUT
+        System.out.printf("DEBUG SIM: Half-tides=%d, Period Energy=%.1f MWh, " +
+                         "Turbine Active=%.1f%% (steps: %d/%d)%n", 
+                         halfTideCount, totalEnergyOutput, turbineActivePercent, 
+                         turbineActiveSteps, totalTimeSteps);
+        
+        System.out.printf("DEBUG PWR: Avg Power=%.1f MW, Max Power=%.1f MW, " +
+                         "Capacity=%.1f MW, Avg Head=%.2f m%n",
+                         avgPowerWhenActive, maxPowerSeen, 
+                         Lagoon.getInstalledCapacityMW(), avgHeadWhenActive);
 
         return totalEnergyOutput; // Return the total energy output in MWh
     }

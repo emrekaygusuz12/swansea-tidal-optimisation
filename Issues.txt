@@ -1,0 +1,40 @@
+Another issues:
+    private static final double TIME_STEP_HOURS = 0.25; // Time step in hours (15 minutes)
+was
+    private static final double TIME_STEP_HOURS = 0.25 / 12; // Time step in hours (15 minutes)
+
+Another issue:
+    private static final int HALF_TIDES_PER_DAY = 48;
+was 
+    private static final int HALF_TIDES_PER_DAY = 4;
+
+
+
+Issue 1: perfect objective correlation (no trade-offs)
+
+double unitCost = TOTAL_CAPITAL_COST / annualEnergyOutput;
+
+Fix:
+
+// FIXED - Added operational complexity that INCREASES with energy
+double baseCapitalCost = TOTAL_CAPITAL_COST / (annualEnergyOutput * 200.0);
+double operationalPenalty = avgHead^2.5 * 3000.0;  
+double energyPenalty = (energy/22000)^1.8 * 6000.0;
+return baseCapitalCost + operationalPenalty + energyPenalty;
+
+Issue 2: Incorrect Time Scaling
+
+// BROKEN - Wrong half-tide duration  
+return halfTides * 12; // 12 hours per half-tide ❌
+
+// FIXED - Correct tidal physics
+return (int)(halfTides * 6.2); // ~6.2 hours per half-tide ✅
+
+Issue 3: Cost component Imbalance
+// BROKEN - Capital cost dominated (£54,000 vs £50 other costs)
+baseCapitalCost = 1.3B / energy;           // ~54,000
+operationalCosts = complexity * 25;        // ~50
+
+// FIXED - Balanced cost components  
+baseCapitalCost = 1.3B / (energy * 200);   // ~270
+operationalCosts = complexity^2.5 * 3000;  // ~2,000
