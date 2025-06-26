@@ -12,7 +12,7 @@ package src.model;
 public class SimulationConfig {
 
      // Temporal configuration
-    private static final int HALF_TIDES_PER_DAY = 4;
+    private static final int HALF_TIDES_PER_DAY = 48;
     private static final int READINGS_PER_HALF_TIDE = 24;
     private static final double TIME_STEP_HOURS = 0.25; // ~0.01 hours per reading
     

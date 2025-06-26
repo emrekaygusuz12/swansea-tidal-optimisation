@@ -35,17 +35,37 @@ public class IndividualGenerator {
      */
     public static Individual createRandomIndividual(int numberOfHalfTides) {
         Individual individual = new Individual(numberOfHalfTides);
-        
+
+        // Create different strategy archetypes for better diversity
+        double strategyType = RANDOM.nextDouble();
+
         for (int i = 0; i < numberOfHalfTides; i++) {
-            // Generate random Hs and He values within the defined range [0.5, 4.0]
-            double hs = 3.5 * RANDOM.nextDouble() + 0.5;
-            double he = 3.5 * RANDOM.nextDouble() + 0.5;
-            // Set the decision variables for this half-tide
-            individual.setStartHead(i, hs); // Hs
-            individual.setEndHead(i, he); // He
+            double hs, he;
+        
+            if (strategyType < 0.25) {
+                // Conservative strategy: Low head values [0.5, 2.0]
+                hs = RANDOM.nextDouble() * 1.5 + 0.5;
+                he = RANDOM.nextDouble() * 1.5 + 0.5;
+            } else if (strategyType < 0.5) {
+                // Aggressive strategy: High head values [2.5, 4.0]
+                hs = RANDOM.nextDouble() * 1.5 + 2.5;
+                he = RANDOM.nextDouble() * 1.5 + 2.5;
+            } else if (strategyType < 0.75) {
+                // Balanced strategy: Mid-range values [1.5, 3.5]
+                hs = RANDOM.nextDouble() * 2.0 + 1.5;
+                he = RANDOM.nextDouble() * 2.0 + 1.5;
+            } else {
+                // Random strategy: Full range [0.5, 4.0]
+                hs = RANDOM.nextDouble() * 3.5 + 0.5;
+                he = RANDOM.nextDouble() * 3.5 + 0.5;
+            }
+
+                // Set the decision variables for this half-tide
+                individual.setStartHead(i, hs); // Hs
+                individual.setEndHead(i, he); // He
         }
         
         return individual;
     }
-    
 }
+

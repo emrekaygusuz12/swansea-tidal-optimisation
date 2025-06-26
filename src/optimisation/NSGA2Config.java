@@ -110,20 +110,20 @@ public class NSGA2Config {
         SimulationConfig.SimulationParameters simParameters = SimulationConfig.getWeeklyConfiguration();
 
         // Calculate mutation rate with minimum threshold (consistent with other configs)
-        double calculateMutationRate = Math.max(0.005, 0.1 / Math.sqrt(simParameters.getHalfTides()));
-        double finalMutationRate = Math.max(calculateMutationRate, MIN_MUTATION_RATE);
+        double calculateMutationRate = Math.max(0.05, 2.0 / simParameters.getHalfTides());
+        double finalMutationRate = Math.max(calculateMutationRate, 0.02);
 
         return new Builder()
-                .populationSize(100)
+                .populationSize(300)
                 .maxGenerations(200)
-                .crossoverProbability(0.9)
+                .crossoverProbability(0.7)
                 .mutationProbability(finalMutationRate) 
                 .crossoverType("SBX")
                 .mutationType("GAUSSIAN")
                 .halfTides(simParameters.getHalfTides())
                 .simulationDescription(simParameters.getDescription())
-                .convergenceThreshold(0.001)
-                .stagnationGenerations(100)
+                .convergenceThreshold(0.0001)
+                .stagnationGenerations(30)
                 .build();
     }
 

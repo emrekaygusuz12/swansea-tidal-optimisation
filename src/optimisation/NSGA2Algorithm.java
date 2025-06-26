@@ -86,6 +86,14 @@ public class NSGA2Algorithm {
      * @return OptimisationResult containing final population, evolution history, and statistics
      */
     public OptimisationResult optimise() {
+        // Add debug output at the very beginning
+        System.out.println("=== ALGORITHM CONFIGURATION ===");
+        System.out.printf("Population Size: %d%n", populationSize);
+        System.out.printf("Mutation Rate: %.4f%n", mutationProbability);
+        System.out.printf("Crossover Rate: %.4f%n", crossoverProbability);
+        System.out.printf("Half Tides: %d%n", halfTides);
+        System.out.println("================================");
+
         long startTime = System.currentTimeMillis();
 
         System.out.println("\nStarting NSGA-II optimisation...\n");
@@ -93,10 +101,10 @@ public class NSGA2Algorithm {
         // Step 1: Initialise population
         initialisePopulation();
 
-        for (int i = 0; i < populationSize; i++) {
-            double[] decisionVariables = currentPopulation.getIndividual(i).getDecisionVariables();
-            System.out.printf("Individual %d: %s%n", i + 1, Arrays.toString(decisionVariables));
-        }
+        // for (int i = 0; i < populationSize; i++) {
+        //     double[] decisionVariables = currentPopulation.getIndividual(i).getDecisionVariables();
+        //     System.out.printf("Individual %d: %s%n", i + 1, Arrays.toString(decisionVariables));
+        // }
 
         // Step 2: Evaluate initial population
         evaluatePopulation(currentPopulation);
@@ -497,7 +505,7 @@ public class NSGA2Algorithm {
                 stats.hypervolume
         );
 
-        if (currentGeneration % 1 == 0) {
+        if (currentGeneration % 10 == 0) {
             List<Individual> paretoFront = ParetoDominance.getParetoFront(currentPopulation);
             printDetailedParetoFront(currentGeneration, paretoFront);
             printConvergenceStatus();
