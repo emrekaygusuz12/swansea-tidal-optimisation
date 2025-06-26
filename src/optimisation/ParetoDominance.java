@@ -74,7 +74,7 @@ public class ParetoDominance {
         }
     }
 
-    public static List<List<Individual>> fastNonDominatedSort(Population population){
+    public static List<List<Individual>> fastNonDominatedSort(Population population) {
         List<Individual> individuals = new ArrayList<>(population.getIndividuals());
         List<List<Individual>> fronts = new ArrayList<>();
 
@@ -96,7 +96,7 @@ public class ParetoDominance {
 
                 Individual q = individuals.get(j);
 
-                if (dominates(p, q)){
+                if (dominates(p, q)) {
                     // p dominates q
                     dominatedSolutions.get(p).add(q);
                 } else if (dominates(q, p)) {
@@ -104,15 +104,19 @@ public class ParetoDominance {
                     dominationCount.put(p, dominationCount.get(p) + 1);
                 }
             }
+        }
 
-            // If p belongs to the first front
+        // Find first front (individuals with dominationCount = 0)
+        List<Individual> firstFront = new ArrayList<>();
+        for (Individual p : individuals) {
             if (dominationCount.get(p) == 0) {
                 p.setRank(0); // Rank 0 for first front
-                if (fronts.isEmpty()) {
-                    fronts.add(new ArrayList<>());
-                }
-                fronts.get(0).add(p);
+                firstFront.add(p);
             }
+        }
+        
+        if (!firstFront.isEmpty()) {
+            fronts.add(firstFront);
         }
 
         // Build subsequent fronts
@@ -120,7 +124,7 @@ public class ParetoDominance {
         while (frontIndex < fronts.size()) {
             List<Individual> nextFront = new ArrayList<>();
 
-            for (Individual p : fronts.get(frontIndex)){
+            for (Individual p : fronts.get(frontIndex)) {
                 for (Individual q : dominatedSolutions.get(p)) {
                     int qDominationCount = dominationCount.get(q) - 1;
                     dominationCount.put(q, qDominationCount);

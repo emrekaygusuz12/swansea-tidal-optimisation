@@ -1,9 +1,6 @@
 package src.optimisation;
 
-import src.optimisation.NextGenerationSelection;
-import src.model.SimulationConfig;
-
-
+import java.util.stream.Collectors;
 import java.util.*;
 
 /**
@@ -491,6 +488,39 @@ public class NSGA2Algorithm {
             System.out.println("No evolution history available yet.");
             return;
         }
+
+        // DEBUG
+        System.out.println("=== Population Diversity Debug ===");
+
+        List<Individual> individuals = currentPopulation.getIndividuals();
+    
+        double minEnergy = individuals.stream().mapToDouble(Individual::getEnergyOutput).min().orElse(0);
+        double maxEnergy = individuals.stream().mapToDouble(Individual::getEnergyOutput).max().orElse(0);
+        double minCost = individuals.stream().mapToDouble(Individual::getUnitCost).min().orElse(0);
+        double maxCost = individuals.stream().mapToDouble(Individual::getUnitCost).max().orElse(0);
+        
+        System.out.printf("Population diversity: Energy [%.1f - %.1f], Cost [%.0f - %.0f]%n", 
+                        minEnergy, maxEnergy, minCost, maxCost);
+        
+        // Count unique objective values
+        Set<String> uniqueObjectives = individuals.stream()
+            .map(i -> String.format("%.1f,%.0f", i.getEnergyOutput(), i.getUnitCost()))
+            .collect(Collectors.toSet());
+        
+        System.out.printf("Unique objective combinations: %d / %d%n", 
+                        uniqueObjectives.size(), individuals.size());
+        
+        // Check how many individuals are in each rank
+        Map<Integer, Long> rankCounts = individuals.stream()
+            .collect(Collectors.groupingBy(Individual::getRank, Collectors.counting()));
+        
+        System.out.println("Rank distribution:");
+        rankCounts.entrySet().stream()
+            .sorted(Map.Entry.comparingByKey())
+            .forEach(entry -> System.out.printf("  Rank %d: %d individuals%n", 
+                                            entry.getKey(), entry.getValue()));
+        
+        System.out.println("=====================================\n");
 
         AlgorithmStats stats = evolutionHistory.get(evolutionHistory.size() - 1);
         Population.PopulationStats popStats = stats.populationStats;

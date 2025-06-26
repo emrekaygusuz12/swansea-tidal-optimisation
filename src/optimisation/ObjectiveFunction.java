@@ -36,14 +36,14 @@ public class ObjectiveFunction {
         int simulationHours = calculateSimulationHours(individual);
 
         // Extrapolate to annual energy output
-        double annualEnergyOutput = Extrapolate(periodEnergyOutput, simulationHours);
+        double annualEnergyOutput = extrapolate(periodEnergyOutput, simulationHours);
 
         // Store the annualised energy output
         individual.setEnergyOutput(annualEnergyOutput);
 
         // Objective 2: Calculate unit cost of energy
-        double unitCost = calculateUnitCost(annualEnergyOutput);
-        individual.setUnitCost(unitCost);
+        double operationalComplexityCost = calculateOperationalComplexityCost(individual, annualEnergyOutput);
+        individual.setUnitCost(operationalComplexityCost);
     }
 
     /**
@@ -68,7 +68,7 @@ public class ObjectiveFunction {
      * @param simulationHours Duration of simulation period in hours
      * @return Annualised energy output in MWh/year
      */
-    private static double Extrapolate(double periodEnergyOutput, int simulationHours) {
+    private static double extrapolate(double periodEnergyOutput, int simulationHours) {
         // Annualise the energy output based on the simulation period
         if (simulationHours <= 0) {
             return 0.0; // Avoid division by zero
@@ -77,6 +77,109 @@ public class ObjectiveFunction {
         final int HOURS_IN_YEAR = 365 * 24; // Total hours in a year
         double annualisationFactor = (double) HOURS_IN_YEAR / simulationHours;
         return periodEnergyOutput * annualisationFactor; // Annualised energy output in MWh
+    }
+
+    private static double calculateOperationalComplexityCost(Individual individual, double annualEnergyOutput) {
+        if (annualEnergyOutput <= 0) {
+            return Double.MAX_VALUE;
+        }
+
+        // Drastically reduce capital cost component
+        double baseCapitalCost = Lagoon.getTotalCapitalCost() / (annualEnergyOutput * 200.0);
+
+        // Calculate average head across all half-tides
+        double avgHead = 0;
+        int halfTides = individual.getDecisionVariables().length / 2;
+        for (int i = 0; i < halfTides; i++) {
+            avgHead += individual.getStartHead(i) + individual.getEndHead(i);
+        }
+        avgHead /= (halfTides * 2);
+
+        // AGGRESSIVE operational penalty that increases dramatically with energy
+        double operationalPenalty = Math.pow(avgHead, 2.5) * 3000.0;
+        
+        // Energy-dependent penalty that creates strong trade-off
+        double energyPenalty = Math.pow(annualEnergyOutput / 22000.0, 1.8) * 6000.0;
+
+        return baseCapitalCost + operationalPenalty + energyPenalty;
+    }
+
+    /**
+     * Calculates operational complexity based on control strategy characteristics.
+     */
+    private static double calculateOperationalComplexity(Individual individual) {
+        double complexity = 0.0;
+        int halfTides = individual.getDecisionVariables().length / 2;
+        
+        for (int i = 0; i < halfTides; i++) {
+            double hs = individual.getStartHead(i);
+            double he = individual.getEndHead(i);
+            
+            // Higher head values increase operational complexity
+            complexity += (hs * hs + he * he) * 0.1;
+            
+            // Large head differences increase complexity (more aggressive operation)
+            complexity += Math.abs(hs - he) * 0.5;
+            
+            // Frequent operational changes increase complexity
+            if (i > 0) {
+                double prevHs = individual.getStartHead(i-1);
+                double prevHe = individual.getEndHead(i-1);
+                complexity += (Math.abs(hs - prevHs) + Math.abs(he - prevHe)) * 0.3;
+            }
+            
+            // Very high head values create exponential complexity
+            if (hs > 3.0 || he > 3.0) {
+                complexity += Math.pow(Math.max(hs, he) - 3.0, 2) * 2.0;
+            }
+        }
+        
+        return complexity / halfTides; // Normalize by number of half-tides
+    }
+
+    /**
+     * Calculates equipment wear cost based on operational intensity.
+     */
+    private static double calculateEquipmentWearCost(Individual individual) {
+        double wearCost = 0.0;
+        int halfTides = individual.getDecisionVariables().length / 2;
+        
+        for (int i = 0; i < halfTides; i++) {
+            double hs = individual.getStartHead(i);
+            double he = individual.getEndHead(i);
+            
+            // Higher heads create more wear (exponential relationship)
+            wearCost += Math.pow(hs, 1.5) * 0.8 + Math.pow(he, 1.5) * 0.8;
+            
+            // Rapid operational changes increase wear
+            if (i > 0) {
+                double prevHe = individual.getEndHead(i-1);
+                wearCost += Math.abs(hs - prevHe) * 1.2; // Cost of switching
+            }
+        }
+        
+        return wearCost * 0.5; // Scale to reasonable cost range
+    }
+
+     /**
+     * Calculates environmental impact cost.
+     */
+    private static double calculateEnvironmentalImpactCost(Individual individual) {
+        double impactCost = 0.0;
+        int halfTides = individual.getDecisionVariables().length / 2;
+        
+        for (int i = 0; i < halfTides; i++) {
+            double hs = individual.getStartHead(i);
+            double he = individual.getEndHead(i);
+            
+            // Higher heads have greater environmental impact
+            impactCost += (hs + he) * 0.8;
+            
+            // Large head differences disrupt ecosystem more
+            impactCost += Math.abs(hs - he) * 1.0;
+        }
+        
+        return impactCost * 0.3; // Scale to reasonable cost range
     }
 
     /**
@@ -109,14 +212,14 @@ public class ObjectiveFunction {
         double periodEnergyOutput = TidalSimulator.simulate(tideHeights, individual);
 
         // Extrapolate to annual energy output
-        double annualEnergyOutput = Extrapolate(periodEnergyOutput, simulationHours);
+        double annualEnergyOutput = extrapolate(periodEnergyOutput, simulationHours);
 
         // Store the annualised energy output
         individual.setEnergyOutput(annualEnergyOutput);
 
         // Objective 2: Calculate unit cost of energy
-        double unitCost = calculateUnitCost(annualEnergyOutput);
-        individual.setUnitCost(unitCost);
+        double operationalComplexityCost = calculateOperationalComplexityCost(individual, annualEnergyOutput);
+        individual.setUnitCost(operationalComplexityCost);
     }
 
 }
