@@ -140,26 +140,26 @@ public class TidalSimulator {
             }
         }
 
-        // CALCULATE DEBUG METRICS
-        double turbineActivePercent = (totalTimeSteps > 0) ? 
-            (100.0 * turbineActiveSteps) / totalTimeSteps : 0.0;
+        // // CALCULATE DEBUG METRICS
+        // double turbineActivePercent = (totalTimeSteps > 0) ? 
+        //     (100.0 * turbineActiveSteps) / totalTimeSteps : 0.0;
         
-        double avgPowerWhenActive = (activeStepsWithPower > 0) ? 
-            totalPowerGenerated / activeStepsWithPower : 0.0;
+        // double avgPowerWhenActive = (activeStepsWithPower > 0) ? 
+        //     totalPowerGenerated / activeStepsWithPower : 0.0;
         
-        double avgHeadWhenActive = (activeStepsWithPower > 0) ? 
-            totalHeadDifferenceWhenActive / activeStepsWithPower : 0.0;
+        // double avgHeadWhenActive = (activeStepsWithPower > 0) ? 
+        //     totalHeadDifferenceWhenActive / activeStepsWithPower : 0.0;
 
-         // DEBUG OUTPUT
-        System.out.printf("DEBUG SIM: Half-tides=%d, Period Energy=%.1f MWh, " +
-                         "Turbine Active=%.1f%% (steps: %d/%d)%n", 
-                         halfTideCount, totalEnergyOutput, turbineActivePercent, 
-                         turbineActiveSteps, totalTimeSteps);
+        // //  // DEBUG OUTPUT
+        // // System.out.printf("DEBUG SIM: Half-tides=%d, Period Energy=%.1f MWh, " +
+        // //                  "Turbine Active=%.1f%% (steps: %d/%d)%n", 
+        // //                  halfTideCount, totalEnergyOutput, turbineActivePercent, 
+        // //                  turbineActiveSteps, totalTimeSteps);
         
-        System.out.printf("DEBUG PWR: Avg Power=%.1f MW, Max Power=%.1f MW, " +
-                         "Capacity=%.1f MW, Avg Head=%.2f m%n",
-                         avgPowerWhenActive, maxPowerSeen, 
-                         Lagoon.getInstalledCapacityMW(), avgHeadWhenActive);
+        // // System.out.printf("DEBUG PWR: Avg Power=%.1f MW, Max Power=%.1f MW, " +
+        // //                  "Capacity=%.1f MW, Avg Head=%.2f m%n",
+        // //                  avgPowerWhenActive, maxPowerSeen, 
+        // //                  Lagoon.getInstalledCapacityMW(), avgHeadWhenActive);
 
         return totalEnergyOutput; // Return the total energy output in MWh
     }

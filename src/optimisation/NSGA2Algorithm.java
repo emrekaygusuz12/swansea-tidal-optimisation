@@ -225,7 +225,7 @@ public class NSGA2Algorithm {
         // Header
         System.out.printf("%-4s %-12s %-12s %-10s %-25s\n", 
                         "Rank", "Energy(MWh)", "Impact", "HeadRange", "Sample Strategy");
-        System.out.println("─".repeat(80));
+        System.out.println("=".repeat(80));
         
         // Sort by energy for better readability
         List<Individual> sorted = new ArrayList<>(paretoFront);
@@ -268,12 +268,12 @@ public class NSGA2Algorithm {
         double minImpact = sorted.stream().mapToDouble(Individual::getUnitCost).min().orElse(0);
         double maxImpact = sorted.stream().mapToDouble(Individual::getUnitCost).max().orElse(0);
         
-        System.out.println("─".repeat(80));
+        System.out.println("=".repeat(80));
         System.out.printf("Energy range: %.1f - %.1f MWh (Δ=%.1f)\n", 
                         minEnergy, maxEnergy, maxEnergy - minEnergy);
         System.out.printf("Impact range: %.6f - %.6f (Δ=%.6f)\n", 
                         minImpact, maxImpact, maxImpact - minImpact);
-        System.out.println("-".repeat(80) + "\n");
+        System.out.println("=".repeat(80) + "\n");
     }
 
     /*

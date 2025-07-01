@@ -7,12 +7,17 @@ package src.model;
  * 
  * All parameters are accessible via static getter methods.
  * 
+ * All the configuration parameters are based on Moreira et al. (2022) "Control Optimisation Baselines
+ * for Tidal Range Structures—CoBaseTRS".
+ * 
  * @author Emre Kaygusuz
  * @version 1.0
  */
-
-
 public final class Lagoon {
+
+    // ----------------------
+    // Lagoon configuration
+    // ----------------------
 
     private static final double LAGOON_SURFACE_AREA_M2 = 11_500_000.0; // Surface area of the lagoon in square meters
 
@@ -43,18 +48,26 @@ public final class Lagoon {
     private static final double TOTAL_CAPITAL_COST = 1_300_000_000; // Total capital cost in GBP
     private static final double INSTALLED_CAPACITY_MW = 320.0; // Total installed capacity in MW
     
-
+    /**
+     * Private constructor to prevent instantiation of this utility class.
+     * All methods and fields are static and should be accessed directly via the class name.
+     */
     private Lagoon() {
         throw new UnsupportedOperationException("Lagoon is a utility class and cannot be instantiated.");
     }
 
     // --------------------------
-    // Public getter methods
+    // Lagoon getter methods
     // --------------------------
 
     public static double getLagoonSurfaceAreaM2() {
         return LAGOON_SURFACE_AREA_M2;
     }
+
+    // ---------------------------
+    // Turbine getter methods
+    // ---------------------------
+
     public static int getNumberOfTurbines() {
         return NUMBER_OF_TURBINES;
     }
@@ -75,6 +88,10 @@ public final class Lagoon {
         return TURBINE_ORIENTATION;
     }
 
+    // ---------------------------
+    // Sluice getter methods
+    // ---------------------------
+
     public static double getSluiceAreaM2() {
         return SLUICE_AREA_M2;
     }
@@ -83,6 +100,10 @@ public final class Lagoon {
         return SLUICE_DISCHARGE_COEFFICIENT;
     }
 
+    // ---------------------------
+    // Grid getter methods
+    // ---------------------------
+
     public static int getNumberOfGridPoints() {
         return NUMBER_OF_GP;
     }
@@ -90,6 +111,10 @@ public final class Lagoon {
     public static double getGridFrequencyHz() {
         return GRID_FREQUENCY_HZ;
     }
+
+    // ---------------------------
+    // Economic getter methods
+    // ---------------------------
 
     public static double getTotalCapitalCost() {
         return TOTAL_CAPITAL_COST;

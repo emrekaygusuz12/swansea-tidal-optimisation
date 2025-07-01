@@ -9,6 +9,10 @@ import src.utils.TideDataReader;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 
 
 /**
@@ -25,6 +29,8 @@ import java.util.List;
  * @version 1.0
  */
 public class NSGA2Main {
+
+    private static Map<String, Double> optimisationResults = new HashMap<>();
     private static final String TIDE_DATA_FILE = "data/b1111463.txt";
 
     public static void main(String[] args) {
@@ -36,9 +42,6 @@ public class NSGA2Main {
 
             // Execute optimisation based on selected configuration
             switch (configType) {
-                case "test":
-                    runTestOptimisation();
-                    break;
                 case "daily":
                     runDailyOptimisation();
                     break;
@@ -54,9 +57,6 @@ public class NSGA2Main {
                 case "comparison":
                     runOperatorComparison();
                     break;
-                default:
-                    System.out.println("Available configurations: test, daily, weekly, annual, research, comparison");
-                    runTestOptimisation();
             }
 
         } catch (IOException e) {
@@ -66,24 +66,7 @@ public class NSGA2Main {
 
     }
 
-    /*
-     * Runs quick test optimisation for development and verification.
-     */
-    private static void runTestOptimisation() throws IOException {
-        System.out.println("Running test optimisation...");
-
-        // Load data and configure
-        List<Double> tideData = loadTideData();
-        NSGA2Config config = NSGA2Config.getTestConfig();
-        List<Double> simulationData = prepareSimulationData(tideData, config);
-
-        // Run optimisaiton
-        NSGA2Algorithm.OptimisationResult result = runOptimisation(config, simulationData);
-
-        // Analyse results
-        analyseResults(result);
-        displayParetoFront(result.getParetoFront(), "Test Optimisation");
-    }
+    
 
     /*
      * Runs daily optimisation for tidal lagoon operation.
@@ -98,6 +81,10 @@ public class NSGA2Main {
 
         // Run optimisation
         NSGA2Algorithm.OptimisationResult result = runOptimisation(config, simulationData);
+
+        double maxEnergy = result.getParetoFront().stream()
+            .mapToDouble(Individual::getEnergyOutput).max().orElse(0);
+        optimisationResults.put("daily", maxEnergy / 1000); // Store in GWh
 
         // Analyse results
         analyseResults(result);
@@ -136,6 +123,8 @@ public class NSGA2Main {
         NSGA2Config config = NSGA2Config.getAnnualConfig();
         List<Double> simulationData = prepareSimulationData(tideData, config);
 
+        validateDataRequirements(simulationData.size(), config.getHalfTides());
+
         // Run optimisation
         NSGA2Algorithm.OptimisationResult result = runOptimisation(config, simulationData);
 
@@ -143,6 +132,52 @@ public class NSGA2Main {
         analyseResults(result);
         displayParetoFront(result.getParetoFront(), "Annual Optimisation");
         exportResults(result, "results/annual_optimisation_results.txt");
+    }
+
+    /**
+ * Validates data requirements and warns about potential issues
+ */
+private static void validateDataRequirements(int availableReadings, int halfTides) {
+    int requiredReadings = halfTides * 24;
+    
+    if (availableReadings < requiredReadings) {
+        System.out.printf("Warning: Using data cycling. Required: %d, Available: %d%n", 
+                         requiredReadings, availableReadings);
+        }
+    
+        System.out.printf("Using %,d readings for %d half-tides%n", availableReadings, halfTides);
+    }
+
+    /**
+     * Validates energy scaling between different timeframes
+     */
+    private static void validateEnergyScaling(Map<String, Double> energyResults) {
+        if (!energyResults.containsKey("daily") || !energyResults.containsKey("weekly") || 
+            !energyResults.containsKey("annual")) {
+            return;
+        }
+        
+        double daily = energyResults.get("daily");
+        double weekly = energyResults.get("weekly");
+        double annual = energyResults.get("annual");
+        
+        double expectedWeekly = daily * 7;
+        double expectedAnnual = daily * 365;
+        
+        System.out.println("\n=== ENERGY SCALING VALIDATION ===");
+        System.out.printf("Daily: %.1f GWh%n", daily);
+        System.out.printf("Weekly: %.1f GWh (expected: %.1f)%n", weekly, expectedWeekly);
+        System.out.printf("Annual: %.1f GWh (expected: %.1f)%n", annual, expectedAnnual);
+        
+        double weeklyError = Math.abs(weekly - expectedWeekly) / expectedWeekly;
+        double annualError = Math.abs(annual - expectedAnnual) / expectedAnnual;
+        
+        if (weeklyError > 0.2) {
+            System.out.printf("  WARNING: Weekly scaling error: %.1f%%%n", weeklyError * 100);
+        }
+        if (annualError > 0.2) {
+            System.out.printf("  WARNING: Annual scaling error: %.1f%%%n", annualError * 100);
+        }
     }
 
     /*
@@ -211,10 +246,11 @@ public class NSGA2Main {
             throw new IOException("No tide data found in file: " + TIDE_DATA_FILE);
         }
 
+        double minTide = Collections.min(tideData);
+        double maxTide = Collections.max(tideData);
+
         System.out.printf("Loaded %d tide data points from %s%n", tideData.size(), TIDE_DATA_FILE);
-        System.out.printf("Tidal range: %.2f m to %.2f m%n",
-                         tideData.stream().mapToDouble(Double::doubleValue).min().orElse(0),
-                         tideData.stream().mapToDouble(Double::doubleValue).max().orElse(0));
+        System.out.printf("Tidal range: %.2f m to %.2f m%n", minTide, maxTide);
         
         return tideData;
     }
@@ -223,19 +259,30 @@ public class NSGA2Main {
      * Prepares simulation data based on configuration requirements.
      */
     private static List<Double> prepareSimulationData(List<Double> tideData, NSGA2Config config) {
-        int readingsNeeded = config.getHalfTides() * 24; // 24 readings per half-tide
-        
-        if (tideData.size() < readingsNeeded) {
-            System.out.printf("Warning: Need %d readings, only %d available%n", 
-                             readingsNeeded, tideData.size());
-            readingsNeeded = tideData.size();
+        int requiredReadings = config.getHalfTides() * 24; // 24 readings per half-tide
+
+        if (requiredReadings <= tideData.size()) {
+            return tideData.subList(0, requiredReadings);
+        } else {
+            System.out.printf("Warning: Need %d readings, only %d available%n",
+                             requiredReadings, tideData.size());
+            System.out.printf("Cycling data to meet requirements%n");
+
+            List<Double> extendedData = new ArrayList<>();
+            int cycles = (requiredReadings / tideData.size()) + 1; // Calculate how many times to repeat data
+
+            for (int i = 0; i < cycles; i++) {
+                extendedData.addAll(tideData);
+            }
+
+            return extendedData.subList(0, requiredReadings);
         }
         
-        List<Double> simulationData = tideData.subList(0, readingsNeeded);
-        System.out.printf("Using %,d readings for %d half-tides%n", 
-                         simulationData.size(), config.getHalfTides());
+        // List<Double> simulationData = tideData.subList(0, readingsNeeded);
+        // System.out.printf("Using %,d readings for %d half-tides%n", 
+        //                  simulationData.size(), config.getHalfTides());
         
-        return simulationData;
+        // return simulationData;
     }
     
     /**
