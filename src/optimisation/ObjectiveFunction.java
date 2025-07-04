@@ -37,11 +37,13 @@ public class ObjectiveFunction {
         // Extrapolate to annual energy output
         double annualEnergyOutput = extrapolate(periodEnergyOutput, simulationHours); 
 
-        // CRITICAL DEBUG OUTPUT - ADD THIS
-        System.out.printf("ENERGY DEBUG: Period=%.1f MWh, Annual=%.1f MWh, " +
-                     "SimHours=%d, Factor=%.1fx%n", 
-                     periodEnergyOutput, annualEnergyOutput, 
-                     simulationHours, (double)HOURS_IN_YEAR / simulationHours);
+        // CRITICAL DEBUG - Track the relationship
+        System.out.printf("PERIOD ANALYSIS: HalfTides=%d, Hours=%d, Days=%.1f, PeriodEnergy=%.1f MWh, AnnualEnergy=%.1f MWh%n",
+                     individual.getDecisionVariables().length / 2, 
+                     simulationHours, 
+                     simulationHours/24.0,
+                     periodEnergyOutput, 
+                     annualEnergyOutput);
 
         // Store the annualised energy output
         individual.setEnergyOutput(annualEnergyOutput); 
@@ -61,7 +63,8 @@ public class ObjectiveFunction {
      */
     private static int calculateSimulationHours(Individual individual) {
         int halfTides = individual.getDecisionVariables().length / 2; // Each decision variable represents a half tide
-        return (int) (halfTides * HOURS_PER_HALF_TIDE); // 6.12 hours per half tide
+        int currentHours = (int) (halfTides * HOURS_PER_HALF_TIDE); // 6.12 hours per half tide
+        return currentHours;
     }
 
 
@@ -78,8 +81,21 @@ public class ObjectiveFunction {
         if (simulationHours <= 0) {
             return 0.0; // Avoid division by zero
         }
+
+
         double annualisationFactor = (double) HOURS_IN_YEAR / simulationHours;
-        return periodEnergyOutput * annualisationFactor; // Annualised energy output in MWh
+        double annualEnergyOutput = periodEnergyOutput * annualisationFactor;
+
+        if (simulationHours >= HOURS_IN_YEAR) {
+        System.out.printf("LONG SIMULATION: %d hours (%.1f days) scaled DOWN by %.3fx to annual: %.1f MWh%n", 
+                         simulationHours, simulationHours/24.0, annualisationFactor, annualEnergyOutput);
+        } else {
+            System.out.printf("SHORT SIMULATION: %d hours (%.1f days) scaled UP by %.3fx to annual: %.1f MWh%n",
+                             simulationHours, simulationHours/24.0, annualisationFactor, annualEnergyOutput);
+        }
+
+
+        return annualEnergyOutput; // Annualised energy output in MWh
     }
 
     private static double calculateOperationalComplexityCost(Individual individual, double annualEnergyOutput) {
@@ -104,7 +120,16 @@ public class ObjectiveFunction {
         // Energy-dependent penalty that creates strong trade-off
         double energyPenalty = Math.pow(annualEnergyOutput / EXPECTED_MIN_OUTPUT, 1.5) * 1000.0;
 
-        return baseCapitalCost + operationalPenalty + energyPenalty;
+        double operationalComplexityCost = baseCapitalCost + operationalPenalty + energyPenalty;
+
+        // Add capacity utilization penalty to bias toward higher energy solutions
+        double avgPowerMW = annualEnergyOutput / 8760.0; // Annual hours
+        double capacityUtilization = avgPowerMW / 320.0; // 320 MW capacity
+        if (capacityUtilization < 0.4) { // Below 40% utilization
+            operationalComplexityCost *= (1.0 + (0.4 - capacityUtilization) * 2.0); // Penalty
+        }
+
+        return operationalComplexityCost;
     }
 
     private static double calculateAverageHead(Individual individual) {
@@ -113,7 +138,8 @@ public class ObjectiveFunction {
         for (int i = 0; i < halfTides; i++) {
             avgHead += individual.getStartHead(i) + individual.getEndHead(i);
         }
-        return avgHead / (halfTides * 2);
+        double averageHead = avgHead / (halfTides * 2);
+        return averageHead;
     }
 
     public static void evaluate(List<Double> tideHeights, Individual individual, int simulationHours) {

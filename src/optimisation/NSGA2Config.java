@@ -112,23 +112,23 @@ public class NSGA2Config {
      * Configuration for annual optimisation. Large population and many generations for comprehensive search.
      */
     public static NSGA2Config getAnnualConfig() {
-        SimulationConfig.SimulationParameters simParameters = SimulationConfig.getAnnualConfiguration();
-
+        SimulationConfig.SimulationParameters simParameters = SimulationConfig.getSeasonalConfiguration();
+        //SimulationConfig.SimulationParameters simParameters = SimulationConfig.getAnnualConfiguration();
         double decisionVariables = simParameters.getHalfTides() * 2; // Each half tide has two decision variables
         double adaptiveMutationRate = 1.0 / decisionVariables; // Adaptive mutation rate based on decision variables
         double finalMutationRate = Math.max(adaptiveMutationRate, MIN_MUTATION_RATE);
 
         return new Builder()
-                .populationSize(2000)
-                .maxGenerations(1000)
-                .crossoverProbability(0.8)
-                .mutationProbability(finalMutationRate) 
+                .populationSize(400)
+                .maxGenerations(50)
+                .crossoverProbability(0.9)
+                .mutationProbability(finalMutationRate * 2.0) // Slightly higher mutation for annual
                 .crossoverType("SBX")
-                .mutationType("GAUSSIAN")
+                .mutationType("POLYNOMIAL")
                 .halfTides(simParameters.getHalfTides())
                 .simulationDescription(simParameters.getDescription())
-                .convergenceThreshold(0.01)
-                .stagnationGenerations(200)
+                .convergenceThreshold(0.05)
+                .stagnationGenerations(10)
                 .build();
     }
 

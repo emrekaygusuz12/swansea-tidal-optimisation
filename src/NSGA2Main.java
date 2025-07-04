@@ -266,16 +266,16 @@ private static void validateDataRequirements(int availableReadings, int halfTide
         } else {
             System.out.printf("Warning: Need %d readings, only %d available%n",
                              requiredReadings, tideData.size());
-            System.out.printf("Cycling data to meet requirements%n");
+            //System.out.printf("Cycling data to meet requirements%n");
 
-            List<Double> extendedData = new ArrayList<>();
-            int cycles = (requiredReadings / tideData.size()) + 1; // Calculate how many times to repeat data
+            //List<Double> extendedData = new ArrayList<>();
+            //int cycles = (requiredReadings / tideData.size()) + 1; // Calculate how many times to repeat data
 
-            for (int i = 0; i < cycles; i++) {
-                extendedData.addAll(tideData);
-            }
+            // for (int i = 0; i < cycles; i++) {
+            //     extendedData.addAll(tideData);
+            // }
 
-            return extendedData.subList(0, requiredReadings);
+            return new ArrayList<>(tideData);
         }
         
         // List<Double> simulationData = tideData.subList(0, readingsNeeded);

@@ -1,15 +1,3 @@
-Another issues:
-    private static final double TIME_STEP_HOURS = 0.25; // Time step in hours (15 minutes)
-was
-    private static final double TIME_STEP_HOURS = 0.25 / 12; // Time step in hours (15 minutes)
-
-Another issue:
-    private static final int HALF_TIDES_PER_DAY = 48;
-was 
-    private static final int HALF_TIDES_PER_DAY = 4;
-
-
-
 Issue 1: perfect objective correlation (no trade-offs)
 
 double unitCost = TOTAL_CAPITAL_COST / annualEnergyOutput;
@@ -25,10 +13,10 @@ return baseCapitalCost + operationalPenalty + energyPenalty;
 Issue 2: Incorrect Time Scaling
 
 // BROKEN - Wrong half-tide duration  
-return halfTides * 12; // 12 hours per half-tide ❌
+return halfTides * 12; // 12 hours per half-tide 
 
 // FIXED - Correct tidal physics
-return (int)(halfTides * 6.2); // ~6.2 hours per half-tide ✅
+return (int)(halfTides * 6.2); // ~6.2 hours per half-tide 
 
 Issue 3: Cost component Imbalance
 // BROKEN - Capital cost dominated (£54,000 vs £50 other costs)
@@ -38,3 +26,65 @@ operationalCosts = complexity * 25;        // ~50
 // FIXED - Balanced cost components  
 baseCapitalCost = 1.3B / (energy * 200);   // ~270
 operationalCosts = complexity^2.5 * 3000;  // ~2,000
+
+
+Issue 4: The energy outputs are decreasing as simulation periods increase
+
+
+fixed from 4 to 6.12 half tides per day
+
+
+Results differ between daily, weekly, and annual results. The energy output in GWh decreases when
+the simulation period increases. This is because the algorithm finds the optimal day and scales it 
+with 365x, finds the optimal week and scales it with 52x, while there's no scale in annual config
+which is more realistic but also underperforming compared to existing literature.
+
+I have implemented a stratrified sampling approach to take seasonal differences into account which
+improved the algorithm up to 410GWh.
+
+
+further suggestions:
+> using a better optimal orientation (already using the best one)
+> using operational mutation (didnt improve)
+> halftide crossover (didnt improve)
+> bias toward higher energy solutions (small improvement)
+> smart initialisation (small to little improvement)
+
+
+fixed time step calculation in simulation config
+corrected tidalsimulator energy calculation
+enhanced physics implementation
+improved lagoon level updates
+
+improved upto 430GWh 
+
+xue et al uses scaling approach "a typical spring-neap tidal cycle, over 14 days" specifically "the 2nd cycle
+of the year of 2012" which had "an average power output very similar to the annual power output"
+States "since optimising the operation for every half-tide for the duration of a year was very 
+compuationally expensive.
+
+Petley and aggidis doesnt use scaling 
+
+codeBaseTR uses a different concept of "upper bound":
+upper bound estimates consider a perfect forecast of the ocean signal. They utilise
+only tidal measurements, returning the maximum energy that can be extracted from the trs
+which refers to perfect vs realistic forecasting, not temporal scaling
+
+I tuned turbine discharge coefficient and it gave me upto 442GWh with these parameters below:
+
+                .populationSize(400)
+                .maxGenerations(50)
+                .crossoverProbability(0.9)
+                .mutationProbability(finalMutationRate * 2.0) // Slightly higher mutation for annual
+                .crossoverType("SBX")
+                .mutationType("POLYNOMIAL")
+                .halfTides(simParameters.getHalfTides())
+                .simulationDescription(simParameters.getDescription())
+                .convergenceThreshold(0.05)
+                .stagnationGenerations(10)
+                .build();
+
+but it took a lot of time.
+    
+
+

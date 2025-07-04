@@ -39,23 +39,49 @@ public class Population {
         this.maxSize = individuals.size();
     }
 
-    /**
-     * Initialises population with random individuals.
-     * 
-     * @param populationSize The number of individuals to generate.
-     * @param numberOfHalfTides The number of half-tides for each individual.
-     */
-    public void initialiseRandom(int populationSize, int numberOfHalfTides) {
+    public void initialiseSmartRandom(int populationSize, int numberOfHalfTides) {
         individuals.clear();
 
         for (int i = 0; i < populationSize; i++) {
-            Individual individual = IndividualGenerator.createRandomIndividual(numberOfHalfTides);
+            Individual individual;
+
+            double initType = (double) i / populationSize;
+
+            if (initType < 0.3) {
+                individual = IndividualGenerator.createRandomIndividual(numberOfHalfTides, "ENERGY_FOCUSED");
+            } else if (initType < 0.6) {
+                individual = IndividualGenerator.createRandomIndividual(numberOfHalfTides, "BALANCED");
+            } else {
+                individual = IndividualGenerator.createRandomIndividual(numberOfHalfTides, "DIVERSE");
+            }
             individuals.add(individual);
         }
-
-        System.out.printf("Initialised population with %d random individuals %n", populationSize);
+        System.out.printf("Initialised smart population: %d energy-focused, %d balanced, %d diverse individuals%n", 
+                     (int)(populationSize * 0.3), (int)(populationSize * 0.3), (int)(populationSize * 0.4));
 
     }
+
+    public void initialiseRandom(int populationSize, int numberOfHalfTides) {
+        initialiseSmartRandom(populationSize, numberOfHalfTides);
+    }
+
+    // /**
+    //  * Initialises population with random individuals.
+    //  * 
+    //  * @param populationSize The number of individuals to generate.
+    //  * @param numberOfHalfTides The number of half-tides for each individual.
+    //  */
+    // public void initialiseRandom(int populationSize, int numberOfHalfTides) {
+    //     individuals.clear();
+
+    //     for (int i = 0; i < populationSize; i++) {
+    //         Individual individual = IndividualGenerator.createRandomIndividual(numberOfHalfTides);
+    //         individuals.add(individual);
+    //     }
+
+    //     System.out.printf("Initialised population with %d random individuals %n", populationSize);
+
+    // }
 
     /**
      * Adds an individual to the population.
