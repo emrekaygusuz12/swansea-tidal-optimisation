@@ -27,7 +27,7 @@ public final class Lagoon {
     private static final int NUMBER_OF_TURBINES = 16;
     private static final double TURBINE_CAPACITY_MW = 20.0; // MW per turbine
     private static final double TURBINE_DIAMETER_M = 7.35; // Diameter in meters
-    private static final double TURBINE_DISCHARGE_COEFFICIENT = 0.90; // Efficiency of the turbine (Dimensionless)
+    private static final double TURBINE_DISCHARGE_COEFFICIENT = 1.36; // Efficiency of the turbine (Dimensionless)
     private static final Orientation TURBINE_ORIENTATION = Orientation.BIDIRECTIONAL; // Orientation of the turbines
 
     // --------------------------

@@ -87,4 +87,9 @@ I tuned turbine discharge coefficient and it gave me upto 442GWh with these para
 but it took a lot of time.
     
 
+daily config yields 508 GWh with 1.36 turbine discharge
 
+existing literatures does not include operational cost, they focus solely on maximising energy output
+my approach is true multi-objective optimisation with trade offs which is good for real world decision making
+(remember the news about swansea tidal lagoon costing £700 more for each tax payer after it is built)
+i have got more pareto-optimal solution
