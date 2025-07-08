@@ -16,8 +16,19 @@ import java.util.Comparator;
  */
 public class Population {
 
+    // ==========================
+    // INSTANCE VARIABLES
+    // ==========================
+
+    /** List of individuals in the population */
     private List<Individual> individuals;
-    private int maxSize; // Maximum population size
+
+    /** Maximum population size */
+    private int maxSize; 
+
+    // ==========================
+    // CONSTRUCTORS
+    // ==========================
 
     /**
      * Constructs a new population with a specified maximum size.
@@ -39,6 +50,20 @@ public class Population {
         this.maxSize = individuals.size();
     }
 
+    // ==========================
+    // POPULATION INITIALISATION
+    // ==========================
+
+    /**
+     * Initialises the population with a smart random strategy.
+     * Distributes individuals across three strategies:
+     * - 30% energy-focused individuals
+     * - 30% balanced individuals
+     * - 40% diverse individuals
+     * 
+     * @param populationSize The number of individuals to generate.
+     * @param numberOfHalfTides The number of half-tides for each individual.
+     */
     public void initialiseSmartRandom(int populationSize, int numberOfHalfTides) {
         individuals.clear();
 
@@ -61,30 +86,24 @@ public class Population {
 
     }
 
+    /**
+     * Initialises population with random individuals using smart strategy.
+     * Currently delegates to initialiseSmartRandom for better diversity.
+     * 
+     * @param populationSize The number of individuals to generate.
+     * @param numberOfHalfTides The number of half-tides for each individual.
+     */
     public void initialiseRandom(int populationSize, int numberOfHalfTides) {
         initialiseSmartRandom(populationSize, numberOfHalfTides);
     }
 
-    // /**
-    //  * Initialises population with random individuals.
-    //  * 
-    //  * @param populationSize The number of individuals to generate.
-    //  * @param numberOfHalfTides The number of half-tides for each individual.
-    //  */
-    // public void initialiseRandom(int populationSize, int numberOfHalfTides) {
-    //     individuals.clear();
-
-    //     for (int i = 0; i < populationSize; i++) {
-    //         Individual individual = IndividualGenerator.createRandomIndividual(numberOfHalfTides);
-    //         individuals.add(individual);
-    //     }
-
-    //     System.out.printf("Initialised population with %d random individuals %n", populationSize);
-
-    // }
+    // ==========================
+    // INDIVIDUAL MANAGEMENT
+    // ==========================
 
     /**
      * Adds an individual to the population.
+     * 
      * @param individual Individual to add
      * @throws IllegalStateException if the population is at maximum capacity.
      */
@@ -128,6 +147,10 @@ public class Population {
         return Collections.unmodifiableList(individuals);
     }
 
+    // ==========================
+    // POPULATION QUERIES
+    // ==========================
+
     /**
      * Gets the current size of the population.
      * 
@@ -139,6 +162,7 @@ public class Population {
 
     /**
      * Gets the maximum allowed size of the population.
+     * 
      * @return Maximum population size.
      */
     public int getMaxSize() {
@@ -154,6 +178,10 @@ public class Population {
         return individuals.isEmpty();
     }
 
+    // ==========================
+    // POPULATION OPERATIONS
+    // ==========================
+
     /**
      * Clears all individuals from the population.
      */
@@ -162,7 +190,7 @@ public class Population {
     }
 
     /**
-     * Creates a copy of this population.
+     * Creates a deep copy of this population.
      * 
      * @return Deep copy of the population with cloned individuals.
      */
@@ -183,6 +211,39 @@ public class Population {
         Collections.sort(individuals, comparator);
     }
 
+    /**
+     * Combines this population with another population.
+     * Creates a new population containing cloned individuals
+     * from both populations.
+     * 
+     * @param other The other population to combine with
+     * @return A new combined population
+     */
+    public Population combine(Population other){
+        Population combined = new Population(this.size() + other.size());
+
+        // Add all individuals from both populations
+        for (Individual individual : this.individuals) {
+            combined.addIndividual(individual.clone());
+        }
+
+        for (Individual individual : other.individuals) {
+            combined.addIndividual(individual.clone());
+        }
+
+        return combined;
+    }
+
+    // ==========================
+    // STATISTICS AND ANALYSIS
+    // ==========================
+
+    /**
+     * Calculates and returns comprehensive population statistics.
+     * Includes energy and cost metrics for all individuals.
+     * 
+     * @return PopulationStats object containing the calculated metrics.
+     */
     public PopulationStats getStatistics() {
         if (individuals.isEmpty()) {
             return new PopulationStats(0, 0, 0, 0, 0, 0, 0);
@@ -225,23 +286,8 @@ public class Population {
                                    minCost, maxCost, avgCost);
     }
 
-    public Population combine(Population other){
-        Population combined = new Population(this.size() + other.size());
-
-        // Add all individuals from both populations
-        for (Individual individual : this.individuals) {
-            combined.addIndividual(individual.clone());
-        }
-
-        for (Individual individual : other.individuals) {
-            combined.addIndividual(individual.clone());
-        }
-
-        return combined;
-    }
-
     /**
-     * Gets the best individuals by best energy output.
+     * Gets the best individuals by highest energy output.
      * 
      * @param count Number of best individuals to retrieve
      * @return List of the best individuals sorted by energy output in descending order.
@@ -267,20 +313,50 @@ public class Population {
                 .toList();
     }
 
+    // ==========================
+    // STRING REPRESENTATION
+    // ==========================
+
+    /**
+     * Returns a string representation of the population.
+     * 
+     * @return String containing population size and max size.
+     */
     @Override
     public String toString() {
         return String.format("Population[size=%d, maxSize=%d]", 
                              individuals.size(), maxSize);
     }
 
+    // ==========================
+    // INNER CLASSES
+    // ==========================
+
     /**
      * Data class for population statistics.
      */
     public static class PopulationStats {
+
+        /** Population size */
         public final int size;
+
+        /** Energy output statistics */
         public final double minEnergy, maxEnergy, avgEnergy;
+
+        /** Unit cost statistics */
         public final double minCost, maxCost, avgCost;
 
+        /**
+         * Constructs population statistics.
+         * 
+         * @param size Population size
+         * @param minEnergy Minimum energy output
+         * @param maxEnergy Maximum energy output
+         * @param avgEnergy Average energy output
+         * @param minCost Minimum unit cost
+         * @param maxCost Maximum unit cost
+         * @param avgCost Average unit cost
+         */
         public PopulationStats(int size, double minEnergy, double maxEnergy, double avgEnergy,
                                double minCost, double maxCost, double avgCost) {
             this.size = size;
@@ -292,6 +368,11 @@ public class Population {
             this.avgCost = avgCost;
         }
 
+        /**
+         * Returns a formatted string representation of the statistics.
+         * 
+         * @return Formatted statistics string.
+         */
         @Override
         public String toString() {
             return String.format("PopulationStats[size=%d, energy=%.1f-%.1f(avg=%.1f), cost=%.0f-%.0f(avg=%.0f)]",
