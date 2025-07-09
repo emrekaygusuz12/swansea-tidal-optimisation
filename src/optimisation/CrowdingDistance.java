@@ -8,11 +8,11 @@ import java.util.*;
  * 
  * Crowding distance measures how close an individual is to its neighbours
  * in objective space. Higher crowding distance indicates more isolated solutions,
- * which helps maintain diversity in the pareto front.
+ * which helps maintain diversity in the Pareto front.
  * 
  * For tidal lagoon optimisation with objectives:
- * - Energy Output (maximise) = higher values preferred
- * - Unit Cost (minimise) = lower values preferred
+ * - Energy Output (maximise) 
+ * - Unit Cost (minimise)
  * 
  * Based on the crowding distance algorithm from Deb et al. (2002).
  * 
@@ -34,13 +34,12 @@ public class CrowdingDistance {
             individual.setCrowdingDistance(0.0);
         }
 
-        // Handle edge cases
         if (populationSize == 0) {
-            return; // nothing to process
+            return;
         }
 
         if (populationSize == 1) {
-            individuals.get(0).setCrowdingDistance(Double.POSITIVE_INFINITY); // Only one individual, set to infinite distance
+            individuals.get(0).setCrowdingDistance(Double.POSITIVE_INFINITY);
             return;
         }
 
@@ -51,12 +50,11 @@ public class CrowdingDistance {
     /**
      * Calculates crowding distance contribution for energy output objective.
      * 
-     * @param individuals List of individuals 
+     * @param individuals List of individuals to evaluate
      */
     private static void calculateCrowdingDistanceForEnergyObjective(List<Individual> individuals) {
-        // Need at least 2 individuals for meaningful crowding distance
         if (individuals.size() < 2) {
-            return; // Nothing to do
+            return;
         }
 
         // Sort by energy output (ascending order)
@@ -67,9 +65,8 @@ public class CrowdingDistance {
         sortedByEnergy.get(0).setCrowdingDistance(Double.POSITIVE_INFINITY);
         sortedByEnergy.get(sortedByEnergy.size() - 1).setCrowdingDistance(Double.POSITIVE_INFINITY);
 
-        // For population of size 2, we're done
         if (sortedByEnergy.size() == 2) {
-            return; // Only two individuals, both are boundary solutions
+            return;
         }
 
         // Calculate range of energy values
@@ -77,20 +74,17 @@ public class CrowdingDistance {
         double maxEnergy = sortedByEnergy.get(sortedByEnergy.size() - 1).getEnergyOutput();
         double energyRange = maxEnergy - minEnergy;
 
-        // Avoid division by zero if all individuals have same energy
         if (energyRange == 0) {
             return;
         }
 
-        // Calculate crowding distance for intermediate results
+        // Calculate crowding distance for intermediate solutions
         for (int i = 1; i < sortedByEnergy.size() - 1; i++) {
             Individual current = sortedByEnergy.get(i);
 
-            // Skip if already set to infinity
             if (current.getCrowdingDistance() == Double.POSITIVE_INFINITY) {
                 continue;
             }
-
 
             double energyBefore = sortedByEnergy.get(i - 1).getEnergyOutput();
             double energyAfter = sortedByEnergy.get(i + 1).getEnergyOutput();
@@ -104,20 +98,19 @@ public class CrowdingDistance {
     /**
      * Calculates crowding distance contribution for unit cost objective.
      * 
-     * @param individuals List of individuals 
+     * @param individuals List of individuals to evaluate
      */
     private static void calculateCrowdingDistanceForCostObjective(List<Individual> individuals) {
-        // Filter out individuals with invalid costs (Double.MAX_VALUE)
+        // Filter out individuals with invalid costs
         List<Individual> validCostIndividuals = individuals.stream()
                 .filter(ind -> ind.getUnitCost() != Double.MAX_VALUE)
                 .toList();
 
-        // If we have fewer than 3 valid cost individuals, skip cost-based crowding
         if (validCostIndividuals.size() < 3) {
             return; 
         }
 
-        // Sort by unit cost (ascending - Lower cost is better)
+        // Sort by unit cost (ascending - lower cost is better)
         List<Individual> sortedByCost = new ArrayList<>(validCostIndividuals);
         sortedByCost.sort(Comparator.comparingDouble(Individual::getUnitCost));
 
@@ -130,16 +123,14 @@ public class CrowdingDistance {
         double maxCost = sortedByCost.get(sortedByCost.size() - 1).getUnitCost();
         double costRange = maxCost - minCost;
 
-        // Avoid division by zero if all individuals have same cost
         if (costRange == 0) {
             return;
         }
 
-        // Calculate crowding distance for intermediate results
+        // Calculate crowding distance for intermediate solutions
         for (int i = 1; i < sortedByCost.size() - 1; i++) {
             Individual current = sortedByCost.get(i);
 
-            // Skip if already set to infinity
             if (current.getCrowdingDistance() == Double.POSITIVE_INFINITY) {
                 continue;
             }
@@ -169,7 +160,7 @@ public class CrowdingDistance {
      * 
      * @param a First individual
      * @param b Second individual
-     * @return -1 if A has higher crowding distance, 1 if B has higher, 0 if equal
+     * @return -1 if a has higher crowding distance, 1 if b has higher, 0 if equal
      */
     public static int crowdedCompare(Individual a, Individual b) {
         int rankComparison = Integer.compare(a.getRank(), b.getRank());
@@ -199,10 +190,9 @@ public class CrowdingDistance {
      */
     public static List<Individual> selectByCrowdingDistance(List<Individual> front, int count) {
         if (count >= front.size()) {
-            return new ArrayList<>(front); // Return all if count exceeds size
+            return new ArrayList<>(front);
         }
 
-        // Calculate crowding distance for the front
         calculateCrowdingDistance(front);
 
         // Sort by crowding distance (descending) and select top count
@@ -251,15 +241,14 @@ public class CrowdingDistance {
 
     /**
      * Data class for crowding distance statistics.
-     * 
      * Contains metrics for monitoring diversity in the population.
      */
     public static class CrowdingStats {
         public final int totalIndividuals;
-        public final int infiniteDistanceCount; // Number of individuals with infinite crowding distance
-        public final double minFiniteDistance; // Minimum crowding distance (excluding infinite)
-        public final double maxFiniteDistance; // Maximum crowding distance
-        public final double averageFiniteDistance; // Average crowding distance (excluding infinite)
+        public final int infiniteDistanceCount;
+        public final double minFiniteDistance;
+        public final double maxFiniteDistance;
+        public final double averageFiniteDistance;
 
         public CrowdingStats(int totalIndividuals, int infiniteDistanceCount,
                              double minFiniteDistance, double maxFiniteDistance, double averageFiniteDistance) {
@@ -283,7 +272,7 @@ public class CrowdingDistance {
          * @return Ratio of infinite distance individuals to total
          */
         public double getDiversityRatio() {
-            return totalIndividuals > 0 ? (double) infiniteDistanceCount / totalIndividuals : 0;
+            return totalIndividuals > 0 ? (double) infiniteDistanceCount / totalIndividuals : 0.0;
         }
     }
 }

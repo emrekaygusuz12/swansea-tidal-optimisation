@@ -93,3 +93,5 @@ existing literatures does not include operational cost, they focus solely on max
 my approach is true multi-objective optimisation with trade offs which is good for real world decision making
 (remember the news about swansea tidal lagoon costing £700 more for each tax payer after it is built)
 i have got more pareto-optimal solution
+
+Tidal range: 0.15 m to 10.38 m but only 0.5-4.0 is relevant for energy generation*
