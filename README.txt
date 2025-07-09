@@ -4,14 +4,14 @@ Implementation
 
 Phase 1
 
-Lagoon.java
-SimulationConfig.java
-Individual.java
-IndividualGenerator.java
-Population.java
-TidalSimulator.java
-ObjectiveFunction.java
-TideDataReader.java
+Lagoon.java (done)
+SimulationConfig.java (done)
+Individual.java (done)
+IndividualGenerator.java (done)
+Population.java (done)
+TidalSimulator.java (done)
+ObjectiveFunction.java (done)
+TideDataReader.java (done)
 Main.java
 
 Phase 2

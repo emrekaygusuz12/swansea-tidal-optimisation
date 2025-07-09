@@ -4,22 +4,40 @@ import java.io.*;
 import java.util.*;
 
 /**
- * Utility class for reading tidal elevation data from a file.
- * This file is expected to have three columns: date, time, and tide height in meters.
+ * Utility class for reading tidal elevation data from BODC (British Oceanographic Data Centre) files.
  * 
- * Example line:
- * * 2023-10-01, 12:00, 2.5
+ * Handles the parsing of BODC tidal height data files which contains:
+ * - Extensive metadata headers with SDN references
+ * - Column header definitions
+ * - Station metadata line
+ * - Tidal measurement data with multiple sensors
  * 
- * Only the tide height (third column) is extracted for further processing.
+ * The parser extracts tidal height values from the HTSeaLvl column
+ * and automatically filters out headers and metadata lines.
  * 
- * Usage:
- * List<Double> tideHeights = FileReader.readTideHeights("data/b1111463.txt");
- * 
+ * Expected data line format (after headers):
+ * ```
+ * 2455563.000000	1	4.677	1	4.679	1	5.153	1
+ * ```
+ * Where columns are: JulianDate QV1 SeaLvl_bubbler QV2 SeaLvl_bubbler2 QV3 HTSeaLvl QV4
+ *  
  * @author Emre Kaygusuz
+ * @version 2.0
  */
 public class TideDataReader {
 
+    // ======================
+    // DATA EXTRACTION METHODS
+    // ======================
 
+    /**
+     * Reads tidal height values from a BODC data file.
+     * Extracts height measurements from column 2 for simulation use.
+     * 
+     * @param filePath path to the tidal data file
+     * @return List of tide heights in meters
+     * @throws IOException if file reading fails
+     */
     public static List<Double> readTideHeights(String filePath) throws IOException {
         List<Double> tideHeights = new ArrayList<>();
         
@@ -50,9 +68,11 @@ public class TideDataReader {
     }
 
     /**
-     * Read tidal data with timestamps (Julian dates converted to readable format)
-     * @param filePath path to the data file
+     * Reads tidal data with timestamps for temporal analysis.
+     * 
+     * @param filePath Path to the data file
      * @return Map with Julian date as key and tide height as value
+     * @throws IOException if file reading fails
      */
     public static Map<Double, Double> readTideData(String filePath) throws IOException {
         Map<Double, Double> tideData = new LinkedHashMap<>();
