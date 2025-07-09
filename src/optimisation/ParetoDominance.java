@@ -2,7 +2,6 @@ package src.optimisation;
 
 import java.util.*;
 
-
 /**
  * Handles Pareto dominance comparison and fast non-dominated sorting for NSGA-II.
  * 
@@ -17,6 +16,10 @@ import java.util.*;
  * @version 1.0
  */
 public class ParetoDominance {
+
+    // ==========================
+    // DOMINANCE COMPARISON
+    // ==========================
 
     /**
      * Determines if individual A dominates individual B.
@@ -74,6 +77,17 @@ public class ParetoDominance {
         }
     }
 
+    // ==========================
+    // FAST NON-DOMINATED SORTING
+    // ==========================
+
+    /**
+     * Performs fast non-dominated sorting on the given population.
+     * Groups individuals into fronts based on Pareto dominance relationships.
+     *
+     * @param population Population to sort
+     * @return List of fronts, where each front contains non dominated individuals
+     */
     public static List<List<Individual>> fastNonDominatedSort(Population population) {
         List<Individual> individuals = new ArrayList<>(population.getIndividuals());
         List<List<Individual>> fronts = new ArrayList<>();
@@ -146,6 +160,9 @@ public class ParetoDominance {
         return fronts;
     }
 
+    // ==========================
+    // UTILITY METHODS
+    // ==========================
 
     /**
      * Gets all non-dominated individuals from the population (Pareto front).
@@ -195,6 +212,10 @@ public class ParetoDominance {
         return count; // Return the number of individuals that dominate the given individual
     }
 
+    // ==========================
+    // STATISTICS & ANALYSIS
+    // ==========================
+
     /**
      * Gets dominance statistics for monitoring optimisation progress.
      * 
@@ -218,16 +239,41 @@ public class ParetoDominance {
         return new DominanceStats(totalIndividuals, frontCount, paretoFrontSize, averageRank, fronts);
     }
 
+    // ==========================
+    // INNER CLASSES
+    // ==========================
+
     /**
      * Data class for dominance analysis statistics.
+     * Contains comprehensive metrics about population
+     * front distribution and dominance relationships.
      */
     public static class DominanceStats {
+
+        /** Total number of individuals in the population */
         public final int totalIndividuals;
+
+        /** Number of fronts identified in the population */
         public final int frontCount;
+
+        /** Size of the Pareto front (first front) */
         public final int paretoFrontSize;
+
+        /** Average rank of individuals in the population */
         public final double averageRank;
+
+        /** List of fronts, where each front contains non-dominated individuals */
         public final List<List<Individual>> fronts;
 
+        /**
+         * Constructs dominance statistics.
+         * 
+         * @param totalIndividuals Total number of individuals
+         * @param frontCount Number of fronts 
+         * @param paretoFrontSize Size of Pareto front
+         * @param averageRank Average rank value
+         * @param fronts List of all fronts
+         */
         public DominanceStats(int totalIndividuals, int frontCount, int paretoFrontSize, 
                               double averageRank, List<List<Individual>> fronts) {
             this.totalIndividuals = totalIndividuals;
@@ -237,6 +283,11 @@ public class ParetoDominance {
             this.fronts = new ArrayList<>(fronts);
         }
 
+        /**
+         * Returns a formatted string representation of the statistics.
+         * 
+         * @return Formatted statistics string
+         */
         @Override
         public String toString() {
             return String.format("DominanceStats[totalIndividuals=%d, frontCount=%d, paretoFrontSize=%d, averageRank=%.1f]",
