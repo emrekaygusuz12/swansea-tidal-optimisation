@@ -18,8 +18,8 @@ Phase 2
 
 CrowdingDistance.java (done)
 GeneticOperators.java (done)
-NextGenerationSelection.java
-NSGA2Algorithm.java
+NextGenerationSelection.java (done)
+NSGA2Algorithm.java (done)
 NSGA2Config.java
 ParetoDominance.java
 NSGA2Main.java
