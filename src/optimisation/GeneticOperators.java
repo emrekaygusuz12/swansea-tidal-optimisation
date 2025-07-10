@@ -3,12 +3,10 @@ package src.optimisation;
 import java.util.*;
 
 /**
- * Implements genetic operators (crossover and mutation) for tidal lagoon
- * optimisation.
+ * Implements genetic operators (crossover and mutation) for tidal lagoon optimisation.
  * 
  * Operators are designed specifically for tidal lagoon decision variables:
- * - Each half-tide has two control parameters: Hs (starting head) and He
- * (ending head)
+ * - Each half-tide has two control parameters: Hs (starting head) and He (ending head)
  * - Decision vector: [Hs_0, He_0, Hs_1, He_1, ..., Hs_N, He_N]
  * - Constraints: 0.5m ≤ head ≤ 4.0m for all head values
  * 
@@ -19,22 +17,93 @@ import java.util.*;
  */
 public class GeneticOperators {
 
-    private static final double MIN_HEAD = 0.5; // Minimum head value in meters
-    private static final double MAX_HEAD = 4.0; // Maximum head value in meters
+    // ==========================
+    // CONSTRAINT CONSTANTS
+    // ==========================
 
-    // Crossover parameters
-    private static final double SBX_ETA = 1.0; // Distribution index for Simulated Binary Crossover (SBX) - Lower value for more exploration
+    /** Minimum head value in meters */
+    private static final double MIN_HEAD = 0.5;
 
-    // Mutation parameters
-    private static final double MUTATION_ETA = 20; // Distribution index for polynomial mutation
+    /** Maximum head value in meters */
+    private static final double MAX_HEAD = 4.0;
 
+    // ==========================
+    // CROSSOVER PARAMETERS
+    // ==========================
+
+    /** Distribution index for Simulated Binary Crossover - lower value for more exploration */
+    private static final double SBX_ETA = 0.9;
+
+    // ==========================
+    // MUTATION PARAMETERS
+    // ==========================
+
+    /** Distribution index for polynomial mutation */
+    private static final double MUTATION_ETA = 18;
+
+    // ==========================
+    // THREAD LOCAL RANDOM
+    // ==========================
+
+    /**
+     * Thread-local random generator for better performance in multi-threaded environments.
+     * 
+     */
+    private static final ThreadLocal<Random> threadLocalRandom =
+            ThreadLocal.withInitial(Random::new);
+
+    // ==========================
+    // OPERATOR CONFIGURATION
+    // ==========================
+
+    /**
+     * Configuration parameters for genetic operators.
+     * Provides default values for various mutation strategies.
+     */
     public static class OperatorConfig{
-        public static final double DEFAULT_PERTURBATION_RANGE = 0.5; // Default range for mutation perturbation
-        public static final double DEFAULT_STRATEGY_THRESHOLD = 0.7; // Default threshold for operational mutation strategy
-        public static final double DEFAULT_DIFFERENCE_STRENGTH = 0.2; // Default strength for difference adjustment in operational mutation
-        public static final double DEFAULT_GAUSSIAN_STRENGTH = 0.77; // Default standard deviation for Gaussian mutation
+        /** Default range for mutation perturbation */
+        public static final double DEFAULT_PERTURBATION_RANGE = 0.5;
+
+        /** Default threshold for operational mutation strategy */
+        public static final double DEFAULT_STRATEGY_THRESHOLD = 0.7;
+
+        /** Default strength for difference adjustment in operational mutation */
+        public static final double DEFAULT_DIFFERENCE_STRENGTH = 0.2;
+
+        /** Default standard deviation for Gaussian mutation */
+        public static final double DEFAULT_GAUSSIAN_STRENGTH = 0.77;
+
+        private OperatorConfig() {
+            throw new UnsupportedOperationException("Utility class cannot be instantiated");
+        }
     }
 
+    /**
+     * Private constructor to prevent instantiation of this utility class.
+     * All methods are static and should be accessed directly via the class name.
+     * 
+     * @throws UnsupportedOperationException if an attempt is made to instantiate this class.
+     */
+    private GeneticOperators() {
+        throw new UnsupportedOperationException("GeneticOperators is a utility class and cannot be instantiated");
+    }
+
+    // ==========================
+    // CROSSOVER OPERATORS
+    // ==========================
+
+    /**
+     * Performs Simulated Binary Crossover (SBX) between two parents.
+     * 
+     * SBX maintains the relationship between parent and offspring distances
+     * and is particularly effective for real-valued optimisation problems.
+     * 
+     * @param parent1 The first parent individual
+     * @param parent2 The second parent individual
+     * @param crossoverProbability Probability of performing crossover
+     * @return An array containing two offspring individuals
+     * @throws IllegalArgumentException if parents are null or crossover probability is invalid
+     */
     public static Individual[] simulatedBinaryCrossover(Individual parent1, Individual parent2,
             double crossoverProbability) {
         if (parent1 == null || parent2 == null) {
@@ -92,10 +161,11 @@ public class GeneticOperators {
      * Simple crossover where each gene is randomly inherited from either parent.
      * Good for maintaining diversity in the population.
      *
-     * @param parent1              The first parent individual
-     * @param parent2              The second parent individual
+     * @param parent1 The first parent individual
+     * @param parent2 The second parent individual
      * @param crossoverProbability Probability of performing crossover
      * @return An array containing two offspring individuals
+     * @throws IllegalArgumentException if parents are null or crossover probability is invalid
      */
     public static Individual[] uniformCrossover(Individual parent1, Individual parent2,
             double crossoverProbability) {
@@ -139,13 +209,22 @@ public class GeneticOperators {
      * Crosses over complete half-tide parameters (Hs, He pairs) rather than
      * individual variables to preserve operational feasibility.
      * 
-     * @param parent1              The first parent individual
-     * @param parent2              The second parent individual
+     * @param parent1 The first parent individual
+     * @param parent2 The second parent individual
      * @param crossoverProbability Probability of performing crossover
      * @return An array containing two offspring individuals
+     * @throws IllegalArgumentException if parents are null or crossover probability is invalid
      */
     public static Individual[] halfTideCrossover(Individual parent1, Individual parent2,
             double crossoverProbability) {
+        if (parent1 == null || parent2 == null) {
+            throw new IllegalArgumentException("Parents cannot be null");
+        }
+
+        if (crossoverProbability < 0.0 || crossoverProbability > 1.0) {
+            throw new IllegalArgumentException("Crossover probability must be between 0 and 1");
+        }
+
         double[] vars1 = parent1.getDecisionVariables().clone();
         double[] vars2 = parent2.getDecisionVariables().clone();
 
@@ -182,17 +261,30 @@ public class GeneticOperators {
         return new Individual[] { offSpring1, offSpring2 };
     }
 
+    // ==========================
+    // MUTATION OPERATORS
+    // ==========================
+
     /**
      * Performs polynomial mutation on an individual.
      * 
      * Polynomial mutation is designed for real-valued variables
      * and produces offspring closer to parents with higher probability.
      * 
-     * @param individual          The individual to mutate
+     * @param individual The individual to mutate
      * @param mutationProbability Probability of mutating each gene
      * @return The mutated individual
+     * @throws IllegalArgumentException if individual is null or mutation probability is invalid
      */
     public static Individual polynomialMutation(Individual individual, double mutationProbability) {
+        if (individual == null) {
+            throw new IllegalArgumentException("Individual cannot be null");
+        }
+
+        if (mutationProbability < 0.0 || mutationProbability > 1.0) {
+            throw new IllegalArgumentException("Mutation probability must be between 0 and 1");
+        }
+
         double[] vars = individual.getDecisionVariables().clone();
 
         for (int i = 0; i < vars.length; i++) {
@@ -233,42 +325,35 @@ public class GeneticOperators {
     }
 
     /**
-     * More robust validation for head values.
-     * @param value
-     * @param paramaterName
-     */
-    private static void validateHeadValue(double value, String parameterName) {
-        if (Double.isNaN(value) || Double.isInfinite(value)) {
-            throw new IllegalArgumentException(parameterName + " cannot be NaN or Infinite");
-        }   
-
-        if (value < MIN_HEAD || value > MAX_HEAD) {
-            throw new IllegalArgumentException(parameterName + " must be between " + MIN_HEAD + " and " + MAX_HEAD
-                    + ", got: " + value);
-        }
-    }
-
-    /**
      * Performs Gaussian mutation on an individual.
      * 
      * Adds gaussian noise to each gene with specified probability.
      * Simpler than polynomial mutation, but effective for local search.
      * 
-     * @param individual          The individual to mutate
+     * @param individual The individual to mutate
      * @param mutationProbability Probability of mutating each gene
-     * @param mutationStrength    Standard deviation of the Gaussian noise
+     * @param mutationStrength Standard deviation of the Gaussian noise
      * @return The mutated individual
+     * @throws IllegalArgumentException if individual is null or mutation probability is invalid
      */
     public static Individual gaussianMutation(Individual individual, double mutationProbability, double mutationStrength) {
+        if (individual == null) {
+            throw new IllegalArgumentException("Individual cannot be null");
+        }
+
+        if (mutationProbability < 0.0 || mutationProbability > 1.0) {
+            throw new IllegalArgumentException("Mutation probability must be between 0 and 1");
+        }
+
+        if (mutationStrength <= 0.0) {
+            throw new IllegalArgumentException("Mutation strength must be positive");
+        }
+
         double[] vars = individual.getDecisionVariables().clone();
-        //double rangeSize = MAX_HEAD - MIN_HEAD; // 7.7m
 
         for (int i = 0; i < vars.length; i++) {
             if (threadLocalRandom.get().nextDouble() <= mutationProbability) {
                 double currentValue = vars[i];
-                
-                // Adaptive mutation strength based on range size
-                //mutationStrength = rangeSize * 0.5; // 10% of the range size
 
                 // If value is near boundaries, use strong mutation to escape
                 double distanceFromBounds = Math.min(currentValue - MIN_HEAD, MAX_HEAD - currentValue);
@@ -277,10 +362,8 @@ public class GeneticOperators {
                 // Increase mutation strength if too close to boundaries 
                 double rangePadding = (MAX_HEAD - MIN_HEAD) * 0.2; 
                 if (distanceFromBounds < rangePadding) {
-                    adaptiveStrength *= 2.0; // Increase mutation strength near boundaries
+                    adaptiveStrength *= 2.0; 
                 }
-
-
 
                 // Generate Gaussian noise
                 double noise = threadLocalRandom.get().nextGaussian() * mutationStrength;
@@ -289,27 +372,11 @@ public class GeneticOperators {
                 newValue = Math.max(MIN_HEAD, Math.min(MAX_HEAD, newValue)); // Clamp to bounds
 
                 if ((newValue <= MIN_HEAD + 0.1 || newValue >= MAX_HEAD - 0.1) && threadLocalRandom.get().nextDouble() < 0.05) {
-                    // Reflect below lower bound or above upper bound with 50% chance
+                    // Random reinitialisation near boundaries with 5% chance
                     vars[i] = MIN_HEAD + threadLocalRandom.get().nextDouble() * (MAX_HEAD - MIN_HEAD);
                 } else {
                     vars[i] = newValue; // Apply new value if not reflecting
                 }
-
-                //if (currentValue <= MIN_HEAD + 0.1) && threadLocalRandom.get().nextDouble())
-
-                // if (newValue < MIN_HEAD) {
-                //     newValue = MIN_HEAD + (MIN_HEAD - newValue); // Reflect below lower bound
-                //     if (newValue > MAX_HEAD) 
-                //         newValue = MAX_HEAD; // Clamp to upper bound if reflected value exceeds it
-                //     } else if (newValue > MAX_HEAD) {
-                //     newValue = MAX_HEAD - (newValue - MAX_HEAD); // Reflect above upper bound
-                //     if (newValue < MIN_HEAD) 
-                //         newValue = MIN_HEAD; // Clamp to lower bound if reflected value exceeds it
-                // }
-
-                // Apply mutation
-                vars[i] = newValue;
-
             }
         }
 
@@ -324,13 +391,24 @@ public class GeneticOperators {
      * Performs operational constraint-aware mutation.
      * 
      * Ensures that Hs and He values maintain realistic operational relationships
-     * while introducing variation.
+     * while introducing variation. Uses two strategies:
+     * - Strategy 1 (70% chance): Perturb both Hs and He together 
+     * - Strategy 2 (30% chance): Adjust the difference between Hs and He
      * 
-     * @param individual          Individual to mutate
+     * @param individual Individual to mutate
      * @param mutationProbability Probability of mutating each half-tide
      * @return Mutated individual
+     * @throws IllegalArgumentException if individual is null or mutation probability is invalid
      */
     public static Individual operationalMutation(Individual individual, double mutationProbability) {
+        if (individual == null) {
+            throw new IllegalArgumentException("Individual cannot be null");
+        }
+
+        if (mutationProbability < 0.0 || mutationProbability > 1.0) {
+            throw new IllegalArgumentException("Mutation probability must be between 0 and 1");
+        }
+
         double[] vars = individual.getDecisionVariables().clone();
         int numHalfTides = vars.length / 2;
 
@@ -344,16 +422,14 @@ public class GeneticOperators {
 
                 // Strategy 1: Perturb Hs and He while maintaining relationship (70% chance)
                 if (threadLocalRandom.get().nextDouble() < 0.7) {
-                    double perturbation = (threadLocalRandom.get().nextDouble() - 0.5) * 0.5; // Small perturbation in range [-0.25,
-                                                                             // 0.25]
+                    double perturbation = (threadLocalRandom.get().nextDouble() - 0.5) * 0.5;
                     vars[hsIndex] = Math.max(MIN_HEAD, Math.min(MAX_HEAD, currentHs + perturbation));
                     vars[heIndex] = Math.max(MIN_HEAD, Math.min(MAX_HEAD, currentHe + perturbation));
                 }
-
                 // Strategy 2: Adjust the difference between Hs and He (30% chance)
                 else {
                     double currentDifference = currentHe - currentHs;
-                    double newDifference = currentDifference + (threadLocalRandom.get().nextGaussian() * 0.2); // Adjust difference
+                    double newDifference = currentDifference + (threadLocalRandom.get().nextGaussian() * 0.2);
                     double midPoint = (currentHs + currentHe) / 2.0;
 
                     vars[hsIndex] = Math.max(MIN_HEAD, Math.min(MAX_HEAD, midPoint - newDifference / 2.0));
@@ -368,21 +444,23 @@ public class GeneticOperators {
         return mutatedIndividual;
     }
 
+    // ==========================
+    // OFFSPRING CREATION
+    // ==========================
+
     /**
      * Creates offspring using genetic operators with specified probabilities.
      * 
-     * @param parents              List of parent individuals (should be even
-     *                             number)
+     * @param parents List of parent individuals (must be even number for pairing)
      * @param crossoverProbability Probability of performing crossover
-     * @param mutationProbability  Probability of performing mutation
-     * @param crossoverType        Type of crossover ("SBX", "UNIFORM", "HALFTIDE")
-     * @param mutationType         Type of mutation ("POLYNOMIAL", "GAUSSIAN",
-     *                             "OPERATIONAL")
+     * @param mutationProbability Probability of performing mutation
+     * @param crossoverType Type of crossover ("SBX", "UNIFORM", "HALFTIDE")
+     * @param mutationType Type of mutation ("POLYNOMIAL", "GAUSSIAN", "OPERATIONAL")
      * @return List of offspring individuals
+     * @throws IllegalArgumentException if parents list is null, empty, or has odd number of parents
      */
     public static List<Individual> createOffspring(List<Individual> parents, double crossoverProbability,
-            double mutationProbability, String crossoverType,
-            String mutationType) {
+            double mutationProbability, String crossoverType, String mutationType) {
 
         if (parents == null || parents.isEmpty()) {
             throw new IllegalArgumentException("Parents list cannot be null or empty");
@@ -390,6 +468,14 @@ public class GeneticOperators {
 
         if (parents.size() % 2 != 0) {
             throw new IllegalArgumentException("Number of parents must be even for pairing");
+        }
+
+        if (crossoverProbability < 0.0 || crossoverProbability > 1.0) {
+            throw new IllegalArgumentException("Crossover probability must be between 0 and 1");
+        }
+
+        if (mutationProbability < 0.0 || mutationProbability > 1.0) {
+            throw new IllegalArgumentException("Mutation probability must be between 0 and 1");
         }
 
         List<Individual> offspring = new ArrayList<>();
@@ -427,7 +513,7 @@ public class GeneticOperators {
                         mutatedChild = polynomialMutation(child, mutationProbability);
                         break;
                     case "GAUSSIAN":
-                        double enhancedMutationStrength = (MAX_HEAD - MIN_HEAD) * 0.75; // 10% of the range
+                        double enhancedMutationStrength = (MAX_HEAD - MIN_HEAD) * 0.75;
                         mutatedChild = gaussianMutation(child, mutationProbability, enhancedMutationStrength);
                         break;
                     case "OPERATIONAL":
@@ -445,29 +531,34 @@ public class GeneticOperators {
     }
 
     /**
-     * Creates offspring using default NSGA-II operators (SBX + Polynomial
-     * Mutation).
+     * Creates offspring using default NSGA-II operators (SBX + Polynomial Mutation).
      * 
-     * @param parents              List of parent individuals
+     * @param parents List of parent individuals
      * @param crossoverProbability Probability of crossover (typically 0.9)
-     * @param mutationProbability  Probability of mutation per gene (typically 1/n
-     *                             where n
-     *                             is number of variables)
+     * @param mutationProbability  Probability of mutation per gene (typically 1/n where n is number of variables)
      * @return List of offspring individuals
      */
     public static List<Individual> createOffspringNSGAII(List<Individual> parents,
-            double crossoverProbability,
-            double mutationProbability) {
+            double crossoverProbability, double mutationProbability) {
         return createOffspring(parents, crossoverProbability, mutationProbability, "SBX", "POLYNOMIAL");
     }
 
+    // ==========================
+    // CONSTRAINT VALIDATION
+    // ==========================
+
     /**
-     * Validates than an individual's decision variables are within constraints.
+     * Validates that an individual's decision variables are within constraints.
      * 
      * @param individual The individual to validate
      * @return true if all constraints are satisfied, false otherwise
+     * @throws IllegalArgumentException if individual is null
      */
     public static boolean validateConstraints(Individual individual) {
+        if (individual == null) {
+            throw new IllegalArgumentException("Individual cannot be null");
+        }
+
         double[] vars = individual.getDecisionVariables();
 
         for (double var : vars) {
@@ -484,14 +575,19 @@ public class GeneticOperators {
      * 
      * @param individual Individual to repair
      * @return Repaired individual with all variables within bounds
+     * @throws IllegalArgumentException if individual is null
      */
     public static Individual repairConstraints(Individual individual) {
+        if (individual == null) {
+            throw new IllegalArgumentException("Individual cannot be null");
+        }
+
         double[] vars = individual.getDecisionVariables();
         boolean needsRepair = false;
 
         for (int i = 0; i < vars.length; i++) {
             if (vars[i] < MIN_HEAD || vars[i] > MAX_HEAD) {
-                vars[i] = Math.max(MIN_HEAD, Math.min(MAX_HEAD, vars[i])); // Repair lower bound violation
+                vars[i] = Math.max(MIN_HEAD, Math.min(MAX_HEAD, vars[i])); 
                 needsRepair = true;
             }
         }
@@ -505,13 +601,21 @@ public class GeneticOperators {
         return individual; // No repair needed, return original
     }
 
+    // ==========================
+    // STATISTICS AND UTILITIES
+    // ==========================
+
     /**
      * Gets genetic operator statistics for monitoring performance.
      * 
      * @param population Population to analyse
      * @return OperatorStats object containing key metrics
+     * @throws IllegalArgumentException if population is null
      */
     public static OperatorStats getOperatorStatistics(List<Individual> population) {
+        if (population == null) {
+            throw new IllegalArgumentException("Population cannot be null");
+        }
         if (population.isEmpty()) {
             return new OperatorStats(0, 0, 0, 0, 0);
         }
@@ -538,10 +642,13 @@ public class GeneticOperators {
      * 
      * @param numVariables Number of decision variables in the individual
      * @return Mutation probability per gene
+     * @throws IllegalArgumentException if numVariables is less than 1
      */
     public static double calculateMutationProbability(int numVariables) {
-        return 1.0 / numVariables; // Simple heuristic: mutation probability inversely proportional to number of
-                                   // variables
+        if (numVariables <= 0) {
+            throw new IllegalArgumentException("Number of variables must be positive");
+        }
+        return 1.0 / numVariables;
     }
 
     /**
@@ -549,21 +656,48 @@ public class GeneticOperators {
      * 
      * @param numHalfTides Number of half-tides per individual
      * @return Recommended mutation probability per half-tide
+     * @throws IllegalArgumentException if numHalfTides is less than 1
      */
     public static double calculateTidalMutationProbability(int numHalfTides) {
-        return Math.min(0.2, 2.0 / numHalfTides); // cap at 20%
+        if (numHalfTides <= 0) {
+            throw new IllegalArgumentException("Number of half-tides must be positive");
+        }
+        return Math.min(0.2, 2.0 / numHalfTides);
     }
+
+    // ==========================
+    // INNER CLASSES
+    // ==========================
 
     /**
      * Data class for genetic operator statistics.
+     * Provides metrics for monitoring operator performance and population diversity.
      */
     public static class OperatorStats {
+        /** Size of the population */
         public final int populationSize;
+
+        /** Mean value of decision variables */
         public final double meanValue;
+
+        /** Standard deviation of decision variables */
         public final double standardDeviation;
+
+        /** Minimum value of decision variables */
         public final double minValue;
+
+        /** Maximum value of decision variables */
         public final double maxValue;
 
+        /**
+         * Constructs operator statistics with key metrics.
+         * 
+         * @param populationSize Size of the population
+         * @param meanValue Mean value of decision variables
+         * @param standardDeviation Standard deviation of decision variables
+         * @param minValue Minimum value of decision variables
+         * @param maxValue Maximum value of decision variables
+         */
         public OperatorStats(int populationSize, double meanValue, double standardDeviation,
                 double minValue, double maxValue) {
             this.populationSize = populationSize;
@@ -573,12 +707,6 @@ public class GeneticOperators {
             this.maxValue = maxValue;
         }
 
-        @Override
-        public String toString() {
-            return String.format("OperatorStats[size=%d, mean=%.3f, stdDev=%.3f, range=[%.3f, %.3f]]",
-                    populationSize, meanValue, standardDeviation, minValue, maxValue);
-        }
-
         /**
          * Gets normalised diversity measure (0 = no diversity, 1 = maximum diversity).
          * 
@@ -586,8 +714,9 @@ public class GeneticOperators {
          */
         public double getDiversity() {
             double range = maxValue - minValue;
-            if (range == 0)
+            if (range == 0) {
                 return 0.0; // Avoid division by zero
+            }
             return (standardDeviation / range);
         }
 
@@ -597,18 +726,13 @@ public class GeneticOperators {
          * @return true if diversity is above threshold (0.1), false otherwise
          */
         public boolean hasGoodDiversity() {
-            return getDiversity() > 0.1; // Example threshold for good diversity
+            return getDiversity() > 0.1;
         }
+
+        @Override
+            public String toString() {
+                return String.format("OperatorStats[size=%d, mean=%.3f, stdDev=%.3f, range=[%.3f, %.3f]]",
+                        populationSize, meanValue, standardDeviation, minValue, maxValue);
+            }
     }
-
-    /**
-     * Thread-local random generator for better performance in multi-threaded
-     * environments.
-     * 
-     * Usage: threadLocalRandom.get().nextDouble() instead of random.nextDouble()
-     */
-    private static final ThreadLocal<Random> threadLocalRandom = 
-            ThreadLocal.withInitial(() -> new Random());
-
-    
 }
