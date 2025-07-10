@@ -51,12 +51,6 @@ public class NSGA2Main {
                 case "annual":
                     runAnnualOptimisation();
                     break;
-                case "research":
-                    runResearchOptimisation();
-                    break;
-                case "comparison":
-                    runOperatorComparison();
-                    break;
             }
 
         } catch (IOException e) {
@@ -177,60 +171,6 @@ private static void validateDataRequirements(int availableReadings, int halfTide
         }
         if (annualError > 0.2) {
             System.out.printf("  WARNING: Annual scaling error: %.1f%%%n", annualError * 100);
-        }
-    }
-
-    /*
-     * Runs research optimisation for advanced tidal lagoon operation.
-     */
-    private static void runResearchOptimisation() throws IOException {
-        System.out.println("Running research optimisation...");
-
-        // Load data and configure
-        List<Double> tideData = loadTideData();
-        NSGA2Config config = NSGA2Config.getResearchConfig();
-        List<Double> simulationData = prepareSimulationData(tideData, config);
-
-        // Run optimisation
-        NSGA2Algorithm.OptimisationResult result = runOptimisation(config, simulationData);
-
-        // Analyse results
-        analyseResults(result);
-        displayParetoFront(result.getParetoFront(), "Research Optimisation");
-        exportResults(result, "results/research_optimisation_results.txt");
-    }
-
-    /*
-     * Runs operator comparison optimisation for evaluating different NSGA-II operators.
-     */
-    private static void runOperatorComparison() throws IOException {
-        System.out.println("Running genetic operator comparison optimisation...");
-
-        List<Double> tideData = loadTideData();
-        String[] crossoverTypes = {"SBX", "UNIFORM", "HALFTIDE"};
-        String[] mutationTypes = {"POLYNOMIAL", "GAUSSIAN", "OPERATIONAL"};
-
-        System.out.println("Comparing " + (crossoverTypes.length * mutationTypes.length) + " operator combinations...");
-
-        for (String crossover : crossoverTypes) {
-            for (String mutation : mutationTypes) {
-                System.out.printf("\n--- Testing %s Crossover + %s Mutation ---\n", crossover, mutation);
-                
-                NSGA2Config config = NSGA2Config.compareConfigs(crossover, mutation); 
-                List<Double> simulationData = prepareSimulationData(tideData, config);
-                
-                NSGA2Algorithm.OptimisationResult result = runOptimisation(config, simulationData);
-                
-                // Brief analysis for comparison
-                List<Individual> paretoFront = result.getParetoFront();
-                double avgEnergy = paretoFront.stream().mapToDouble(Individual::getEnergyOutput).average().orElse(0);
-                double avgCost = paretoFront.stream()
-                    .filter(ind -> ind.getUnitCost() != Double.MAX_VALUE)
-                    .mapToDouble(Individual::getUnitCost).average().orElse(0);
-                
-                System.out.printf("Result: %d solutions, Avg Energy: %.1f MWh, Avg Cost: \u00A3%.0f/MWh%n",
-                                 paretoFront.size(), avgEnergy, avgCost);
-            }
         }
     }
 

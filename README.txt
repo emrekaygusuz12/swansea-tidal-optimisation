@@ -20,7 +20,7 @@ CrowdingDistance.java (done)
 GeneticOperators.java (done)
 NextGenerationSelection.java (done)
 NSGA2Algorithm.java (done)
-NSGA2Config.java
-ParetoDominance.java
+NSGA2Config.java (done)
+ParetoDominance.java (done)
 NSGA2Main.java
 
