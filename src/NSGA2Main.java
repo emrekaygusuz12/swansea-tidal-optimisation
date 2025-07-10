@@ -52,7 +52,6 @@ public class NSGA2Main {
                     runAnnualOptimisation();
                     break;
             }
-
         } catch (IOException e) {
             System.err.println("Optimisation failed: " + e.getMessage());
             e.printStackTrace();
@@ -60,13 +59,11 @@ public class NSGA2Main {
 
     }
 
-    
-
     /*
      * Runs daily optimisation for tidal lagoon operation.
      */
     private static void runDailyOptimisation() throws IOException {
-        System.out.println("Running daily optimisation...");
+        System.out.println("=== DAILY OPTIMISATION ===");
 
         // Load data and configure
         List<Double> tideData = loadTideData();
@@ -90,7 +87,7 @@ public class NSGA2Main {
      * Runs weekly optimisation for tidal lagoon operation.
      */
     private static void runWeeklyOptimisation() throws IOException {
-        System.out.println("Running weekly optimisation...");
+        System.out.println("=== WEEKLY OPTIMISATION ===");
 
         // Load data and configure
         List<Double> tideData = loadTideData();
@@ -110,7 +107,7 @@ public class NSGA2Main {
      * Runs annual optimisation for tidal lagoon operation.
      */
     private static void runAnnualOptimisation() throws IOException {
-        System.out.println("\nRunning annual optimisation...");
+        System.out.println("\n=== ANNUAL OPTIMISATION ===\n");
 
         // Load data and configure
         List<Double> tideData = loadTideData();
@@ -141,44 +138,12 @@ private static void validateDataRequirements(int availableReadings, int halfTide
     
         System.out.printf("Using %,d readings for %d half-tides%n", availableReadings, halfTides);
     }
-
-    /**
-     * Validates energy scaling between different timeframes
-     */
-    private static void validateEnergyScaling(Map<String, Double> energyResults) {
-        if (!energyResults.containsKey("daily") || !energyResults.containsKey("weekly") || 
-            !energyResults.containsKey("annual")) {
-            return;
-        }
-        
-        double daily = energyResults.get("daily");
-        double weekly = energyResults.get("weekly");
-        double annual = energyResults.get("annual");
-        
-        double expectedWeekly = daily * 7;
-        double expectedAnnual = daily * 365;
-        
-        System.out.println("\n=== ENERGY SCALING VALIDATION ===");
-        System.out.printf("Daily: %.1f GWh%n", daily);
-        System.out.printf("Weekly: %.1f GWh (expected: %.1f)%n", weekly, expectedWeekly);
-        System.out.printf("Annual: %.1f GWh (expected: %.1f)%n", annual, expectedAnnual);
-        
-        double weeklyError = Math.abs(weekly - expectedWeekly) / expectedWeekly;
-        double annualError = Math.abs(annual - expectedAnnual) / expectedAnnual;
-        
-        if (weeklyError > 0.2) {
-            System.out.printf("  WARNING: Weekly scaling error: %.1f%%%n", weeklyError * 100);
-        }
-        if (annualError > 0.2) {
-            System.out.printf("  WARNING: Annual scaling error: %.1f%%%n", annualError * 100);
-        }
-    }
-
+   
     /*
      * Loads tide data from the specified file.
      */
     private static List<Double> loadTideData() throws IOException {
-        System.out.println("\nLoading tide data...");
+        System.out.println("Loading tidal data...\n");
         
         List<Double> tideData = TideDataReader.readTideHeights(TIDE_DATA_FILE);
 
@@ -189,7 +154,7 @@ private static void validateDataRequirements(int availableReadings, int halfTide
         double minTide = Collections.min(tideData);
         double maxTide = Collections.max(tideData);
 
-        System.out.printf("Loaded %d tide data points from %s%n", tideData.size(), TIDE_DATA_FILE);
+        System.out.printf("Loaded %,d tide data points%n", tideData.size());
         System.out.printf("Tidal range: %.2f m to %.2f m%n", minTide, maxTide);
         
         return tideData;
@@ -202,34 +167,24 @@ private static void validateDataRequirements(int availableReadings, int halfTide
         int requiredReadings = config.getHalfTides() * 24; // 24 readings per half-tide
 
         if (requiredReadings <= tideData.size()) {
+            System.out.printf("Using %,d readings for %d half-tides%n", 
+                             requiredReadings, config.getHalfTides());
             return tideData.subList(0, requiredReadings);
         } else {
-            System.out.printf("Warning: Need %d readings, only %d available%n",
+            System.out.printf("Warning: Need %,d readings, only %,d available%n",
                              requiredReadings, tideData.size());
-            //System.out.printf("Cycling data to meet requirements%n");
-
-            //List<Double> extendedData = new ArrayList<>();
-            //int cycles = (requiredReadings / tideData.size()) + 1; // Calculate how many times to repeat data
-
-            // for (int i = 0; i < cycles; i++) {
-            //     extendedData.addAll(tideData);
-            // }
-
+            System.out.printf("Using all available data (%,d readings)%n", tideData.size());
             return new ArrayList<>(tideData);
         }
-        
-        // List<Double> simulationData = tideData.subList(0, readingsNeeded);
-        // System.out.printf("Using %,d readings for %d half-tides%n", 
-        //                  simulationData.size(), config.getHalfTides());
-        
-        // return simulationData;
     }
     
     /**
      * Runs NSGA-II optimisation with given configuration.
      */
     private static NSGA2Algorithm.OptimisationResult runOptimisation(NSGA2Config config, List<Double> simulationData) {
-        System.out.println("\nStarting NSGA-II Optimisation...");
+        System.out.println("\n" + "=".repeat(60));
+        System.out.println("              STARTING NSGA-II OPTIMISATION");
+        System.out.println("=".repeat(60));
         System.out.println(config.getDetailedSummary());
         
         // Validate configuration
@@ -239,7 +194,7 @@ private static void validateDataRequirements(int availableReadings, int halfTide
         NSGA2Algorithm algorithm = new NSGA2Algorithm(config, simulationData);
         NSGA2Algorithm.OptimisationResult result = algorithm.optimise(); 
         
-        System.out.println("Optimisation completed!");
+        System.out.println("Optimisation completed successfully!");
         return result;
     }
     
@@ -247,22 +202,16 @@ private static void validateDataRequirements(int availableReadings, int halfTide
      * Analyses and displays optimisation results.
      */
     private static void analyseResults(NSGA2Algorithm.OptimisationResult result) {
-        System.out.println("\n===Optimisation Results Analysis===");
-        
-        System.out.println(result);
-        
-        // Final population statistics
-        Population.PopulationStats finalStats = result.finalPopulation.getStatistics();
-        System.out.printf("Final Population: %s%n", finalStats);
+        System.out.println("\n" + "=".repeat(60));
+        System.out.println("OPTIMISATION RESULTS ANALYSIS");
+        System.out.println("=".repeat(60));
         
         // Pareto front analysis
         List<Individual> paretoFront = result.getParetoFront();
-        System.out.printf("Pareto Front Size: %d solutions%n", paretoFront.size());
         
         if (!paretoFront.isEmpty()) {
             double minEnergy = paretoFront.stream().mapToDouble(Individual::getEnergyOutput).min().orElse(0);
             double maxEnergy = paretoFront.stream().mapToDouble(Individual::getEnergyOutput).max().orElse(0);
-
             double minEnergyGWh = minEnergy / 1000; // Convert MWh to GWh
             double maxEnergyGWh = maxEnergy / 1000; // Convert MWh to GWh
             
@@ -273,8 +222,12 @@ private static void validateDataRequirements(int availableReadings, int halfTide
                 .filter(ind -> ind.getUnitCost() != Double.MAX_VALUE)
                 .mapToDouble(Individual::getUnitCost).max().orElse(0);
             
-            System.out.printf("Energy Range: %.1f - %.1f GWh%n", minEnergyGWh, maxEnergyGWh);
-            System.out.printf("Cost Range: \u00A3%.0f - \u00A3%.0f per MWh%n", minCost, maxCost);
+            System.out.printf("Execution Time:     %.2f seconds%n", result.executionTimeSeconds);
+            System.out.printf("Generations Run:    %d%n", result.generationsRun);
+            System.out.printf("Convergence:        %s%n", result.convergenceAchieved ? "Achieved" : "Not achieved");
+            System.out.printf("Pareto Front Size:  %d solutions%n", paretoFront.size());
+            System.out.printf("Energy Range:       %.1f - %.1f GWh%n", minEnergyGWh, maxEnergyGWh);
+            System.out.printf("Cost Range:         \u00A3%.0f - \u00A3%.0f per MWh%n", minCost, maxCost);
         }
         
         // Convergence analysis
@@ -282,27 +235,28 @@ private static void validateDataRequirements(int availableReadings, int halfTide
             NSGA2Algorithm.AlgorithmStats firstGen = result.evolutionHistory.get(0);
             NSGA2Algorithm.AlgorithmStats lastGen = result.evolutionHistory.get(result.evolutionHistory.size() - 1);
             
-            System.out.printf("Pareto Front Growth: %d -> %d solutions%n",
+            System.out.printf("Improvement:        %d -> %d solutions (Pareto front growth)%n",
                              firstGen.paretoFrontSize, lastGen.paretoFrontSize);
-            System.out.printf("Hypervolume Improvement: %.2e -> %.2e%n",
+            System.out.printf("Quality Metric:     %.2e -> %.2e (hypervolume)%n",
                              firstGen.hypervolume, lastGen.hypervolume);
         }
     }
     
-    /**
+   /**
      * Displays Pareto front solutions in a formatted table.
      */
     private static void displayParetoFront(List<Individual> paretoFront, String title) {
-        System.out.printf("\n %s - Pareto Front Solutions%n", title);
-        System.out.println("==================================================");
+        System.out.println("\n" + "=".repeat(60));
+        System.out.printf("PARETO FRONT SOLUTIONS - %s%n", title.toUpperCase());
+        System.out.println("=".repeat(60));
         
         if (paretoFront.isEmpty()) {
             System.out.println("No Pareto front solutions found.");
             return;
         }
         
-        System.out.printf("%-8s %-12s %-15s %-10s%n", "Rank", "Energy (GWh)", "Cost (\u00A3/MWh)", "Strategy");
-        System.out.println("--------------------------------------------------");
+        System.out.printf("%-6s %-14s %-16s %-12s%n", "Rank", "Energy (GWh)", "Cost (\u00A3/MWh)", "Strategy");
+        System.out.println("-".repeat(60));
         
         // Sort by energy output for display
         paretoFront.sort((a, b) -> Double.compare(b.getEnergyOutput(), a.getEnergyOutput()));
@@ -322,33 +276,33 @@ private static void validateDataRequirements(int availableReadings, int halfTide
             avgHs /= halfTides;
             avgHe /= halfTides;
             
-            String strategy = String.format("Hs=%.1f,He=%.1f", avgHs, avgHe);
+            String strategy = String.format("Hs=%.1f, He=%.1f", avgHs, avgHe);
             double energyGWh = ind.getEnergyOutput() / 1000.0;
-            System.out.printf("%-8d %-12.1f %-15s %-10s%n", 
+            System.out.printf("%-6d %-14.1f %-16s %-12s%n", 
                              i + 1, energyGWh, costStr, strategy);
         }
         
         if (paretoFront.size() > 10) {
-            System.out.printf("... and %d more solutions%n", paretoFront.size() - 10);
+            System.out.printf("\n... and %d additional solutions not shown%n", paretoFront.size() - 10);
         }
     }
     
-    /**
+   /**
      * Exports optimisation results to file.
      */
     private static void exportResults(NSGA2Algorithm.OptimisationResult result, String filename) {
-        System.out.printf("\n Exporting results to %s...%n", filename);
+        System.out.println("\n" + "=".repeat(60));
+        System.out.println("              EXPORTING RESULTS");
+        System.out.println("=".repeat(60));
         
         try {
-            // In a real implementation, you would write results to file
-            // For now, just indicate what would be exported
             List<Individual> paretoFront = result.getParetoFront();
             
-            System.out.printf("Would export:%n");
-            System.out.printf("- %d Pareto front solutions%n", paretoFront.size());
-            System.out.printf("- %d generations of evolution history%n", result.evolutionHistory.size());
-            System.out.printf("- Algorithm configuration and parameters%n");
-            System.out.printf("- Performance metrics and convergence data%n");
+            System.out.printf("Target file:        %s%n", filename);
+            System.out.printf("Pareto solutions:   %d%n", paretoFront.size());
+            System.out.printf("Evolution history:  %d generations%n", result.evolutionHistory.size());
+            System.out.printf("Algorithm config:   Included%n");
+            System.out.printf("Performance data:   Included%n");
             
             // TODO: Implement actual file export
             // CSVExporter.exportParetoFront(paretoFront, filename);

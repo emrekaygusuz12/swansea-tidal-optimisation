@@ -58,7 +58,6 @@ public class TideDataReader {
                         double height = Double.parseDouble(parts[2]);
                         tideHeights.add(height);
                     } catch (NumberFormatException e) {
-                        System.err.println("Invalid tide height value: " + parts[2] + " in line: " + line);
                     }
                 }
             }

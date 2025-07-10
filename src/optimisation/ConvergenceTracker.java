@@ -165,7 +165,7 @@ public class ConvergenceTracker {
      * Print detailed convergence progress.
      */
     private void printProgress(ConvergenceMetrics metrics) {
-        System.out.printf("Generation %d: PF=%d, Energy=%.1f GWh, Cost=£%.0f/MWh, HV=%.2e, Spread=%.4f%n",
+        System.out.printf("Generation %d: PF=%d, Energy=%.1f GWh, Cost=\u00A3%.0f/MWh, HV=%.2e, Spread=%.4f%n",
                          metrics.generation, 
                          metrics.paretoSize, 
                          metrics.maxEnergy / 1000.0, // Convert to GWh for display
@@ -245,7 +245,7 @@ public class ConvergenceTracker {
             
             return String.format("Convergence: Achieved at generation %d%n" +
                                "Reason: %s%n" +
-                               "Progress: Energy +%.1f MWh, Cost -£%.0f/MWh, PF %d→%d solutions",
+                               "Progress: Energy +%.1f MWh, Cost -\u00A3%.0f/MWh, PF %d->%d solutions",
                                convergenceGeneration, reason, energyImprovement, costImprovement,
                                firstGeneration.paretoSize, lastGeneration.paretoSize);
         }

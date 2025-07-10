@@ -657,7 +657,7 @@ public class NSGA2Algorithm {
                 double energyImprovement = summary.lastGeneration.maxEnergy - summary.firstGeneration.maxEnergy;
                 double costImprovement = summary.firstGeneration.minCost - summary.lastGeneration.minCost;
                 
-                System.out.printf("STATUS: Optimizing - Energy +%.1f MWh, Cost -£%.0f/MWh since start%n",
+                System.out.printf("STATUS: Optimizing - Energy +%.1f MWh, Cost -\u00A3%.0f/MWh since start%n",
                                 energyImprovement, costImprovement);
             }
         }
@@ -677,7 +677,6 @@ public class NSGA2Algorithm {
         
         System.out.println("\n=== DETAILED CONVERGENCE ANALYSIS ===");
         ConvergenceTracker.ConvergenceSummary summary = convergenceTracker.getConvergenceSummary();
-        System.out.println(summary);
         
         if (summary.converged) {
             double generationsToConvergence = summary.convergenceGeneration;
@@ -692,11 +691,11 @@ public class NSGA2Algorithm {
         // Print optimization trajectory
         if (summary.firstGeneration != null && summary.lastGeneration != null) {
             System.out.println("\n=== OPTIMIZATION TRAJECTORY ===");
-            System.out.printf("Initial: Energy %.1f GWh, Cost £%.0f/MWh, PF %d solutions%n",
+            System.out.printf("Initial: Energy %.1f GWh, Cost \u00A3%.0f/MWh, PF %d solutions%n",
                             summary.firstGeneration.maxEnergy / 1000.0,
                             summary.firstGeneration.minCost,
                             summary.firstGeneration.paretoSize);
-            System.out.printf("Final:   Energy %.1f GWh, Cost £%.0f/MWh, PF %d solutions%n",
+            System.out.printf("Final:   Energy %.1f GWh, Cost \u00A3%.0f/MWh, PF %d solutions%n",
                             summary.lastGeneration.maxEnergy / 1000.0,
                             summary.lastGeneration.minCost,
                             summary.lastGeneration.paretoSize);
