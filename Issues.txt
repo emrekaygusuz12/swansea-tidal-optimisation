@@ -95,3 +95,31 @@ my approach is true multi-objective optimisation with trade offs which is good f
 i have got more pareto-optimal solution
 
 Tidal range: 0.15 m to 10.38 m but only 0.5-4.0 is relevant for energy generation*
+
+petley720GWH but ebb only
+
+// Well-established from Petley & Aggidis (2016)
+DISCOUNT_RATE = 0.06;           // ✅ Standard project finance
+OPEX_PERCENTAGE = 0.03;         // ✅ Industry standard
+PROJECT_LIFETIME_YEARS = 25.0;  // ✅ Typical infrastructure
+
+for penalty factors
+HEAD_VARIATION_COST = 5.0;      // ❓ No literature basis
+ENVIRONMENTAL_COST = 3.0;       // ❓ No quantified impact
+MAINTENANCE_SCALING = 2.0;      // ❓ No operational data
+FREQUENCY_COST = 3.0;           // ❓ No real-world validation
+
+"Specific LCOE benchmarks for tidal lagoons are limited in available literature"
+"Penalty parameters represent engineering estimates rather than empirically validated costs"
+"Focus is on relative improvement through optimization rather than absolute cost validation"
+
+ the Swansea Bay tidal lagoon project is expected to have an LCOE up to around $300/MW h Private Eye, 2017. Keeping The Lights On. No. 1454, page 39.
+ I get £340-350 but that paper is only focusing on cost, there is no energy generation
+ Petley is getting around 480GWh annually with dual.
+
+
+ operation and maintanance cost is scaled to swansea but may not be accurate. swansea bay has fewer and larger turbines
+ hence the operation cost should be 30-50% lower.
+
+ alderney 43 smaller turbines
+ swansea 16 larger turbines.

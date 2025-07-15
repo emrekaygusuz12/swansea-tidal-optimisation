@@ -87,8 +87,8 @@ public class IndividualGenerator {
 
             if (RANDOM.nextDouble() < 0.1) {
                 // Occasionally introduce a low value to simulate variability
-                hs = RANDOM.nextDouble() * 3.5 + 0.5; // Low head value
-                he = RANDOM.nextDouble() * 3.5 + 0.5; // Low head value
+                hs = RANDOM.nextDouble() * 3.0 + 1.0; // [1.0, 4.0]
+                he = RANDOM.nextDouble() * 3.0 + 1.0; // [1.0, 4.0]
             }
             individual.setStartHead(i, hs);
             individual.setEndHead(i, he);
@@ -116,8 +116,8 @@ public class IndividualGenerator {
                 he = RANDOM.nextDouble() * 2.0 + 2.0; // [2.0, 4.0]
             } else {
                 // Occasionally use high values
-                hs = RANDOM.nextDouble() * 1.5 + 0.5; // [0.5, 2.0]
-                he = RANDOM.nextDouble() * 1.5 + 0.5; // [0.5, 2.0]
+                hs = RANDOM.nextDouble() * 1.0 + 1.0; // [1.0, 2.0]
+                he = RANDOM.nextDouble() * 1.0 + 1.0; // [1.0, 2.0]
             }
 
             individual.setStartHead(i, hs);
@@ -145,8 +145,8 @@ public class IndividualGenerator {
 
             if (strategyType < 0.15) {
                 // Occasionally use low head values for cost efficiency
-                hs = RANDOM.nextDouble() * 1.5 + 0.5; // [0.5, 2.0]
-                he = RANDOM.nextDouble() * 1.5 + 0.5; // [0.5, 2.0]
+                hs = RANDOM.nextDouble() * 1.0 + 1.0; // [1.0, 2.0]
+                he = RANDOM.nextDouble() * 1.0 + 1.0; // [1.0, 2.0]
             } else if (strategyType < 0.45) {
                 // Mid-range values for balanced performance
                 hs = RANDOM.nextDouble() * 1.5 + 2.5; // [2.5, 4.0]
@@ -162,8 +162,8 @@ public class IndividualGenerator {
                     he = RANDOM.nextDouble() * 2.0 + 2.0; // [2.0, 4.0]
                 } else {
                     // Full range random values for maximum diversity
-                    hs = RANDOM.nextDouble() * 3.5 + 0.5; // [0.5, 4.0]
-                    he = RANDOM.nextDouble() * 3.5 + 0.5; // [0.5, 4.0]
+                    hs = RANDOM.nextDouble() * 3.0 + 1.0; // [1.0, 4.0]
+                    he = RANDOM.nextDouble() * 3.0 + 1.0; // [1.0, 4.0]
                 }
             }
 

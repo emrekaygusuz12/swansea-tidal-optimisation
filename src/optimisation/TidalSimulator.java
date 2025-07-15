@@ -10,6 +10,7 @@ import java.util.List;
  * Simulates the operation of a tidal lagoon using a 0D model approach.
  * 
  * This class implements the physics of tidal lagoon operation including:
+ * - Enhanced turbine efficiency modeling based on literature
  * - Orifice theory for flow calculations
  * - Mass conservation for lagoon level updates
  * - Power generation calculations
@@ -18,7 +19,7 @@ import java.util.List;
  * Uses backward-difference method for temporal discretisation.
  * 
  * @author Emre Kaygusuz
- * @version 1.1
+ * @version 1.2
  */
 public class TidalSimulator {
 
@@ -54,6 +55,13 @@ public class TidalSimulator {
 
     /** Maximum lagoon level in meters */
     private static final double MAX_LAGOON_LEVEL = 10.0;
+
+    // ==========================
+    // ENCHANGED TURBINE MODEL
+    // ==========================
+
+    /** Minimum operating head difference in meters (literature: 1-2m) */
+    private static final double MIN_OPERATING_HEAD = 1.0;
 
     /**
      * Simulates tidal lagoon operation for a given tide sequence and control parameters.
@@ -103,36 +111,46 @@ public class TidalSimulator {
                 double headDifference = Math.abs(seaLevel - lagoonLevel);
 
                // ==========================
-               // TURBINE CONTROL LOGIC
+               // ENHANCED TURBINE CONTROL LOGIC
                // ==========================
 
-               if (!turbineOn && headDifference >= Hs) {
-                    turbineOn = true; 
-               }
+               double powerMW = 0.0;
 
-               if (turbineOn && headDifference < He) {
-                    turbineOn = false; 
-               }
+                if (headDifference >= Hs) {
+                    // Full operation: head difference above starting threshold
+                    powerMW = calculateTurbinePower(headDifference, totalTurbineArea, 
+                                                                maxPowerMW, dischargeCoefficient);
+                    turbineOn = true;
+                    
+                } else if (headDifference >= He && turbineOn) {
+                    // Continued operation: between ending and starting thresholds (hysteresis)
+                    double availablePower = calculateTurbinePower(headDifference, totalTurbineArea, 
+                                                                maxPowerMW, dischargeCoefficient);
+                    
+                    if (Hs > He) {
+                        // Graduated operation between thresholds
+                        double operationFactor = (headDifference - He) / (Hs - He);
+                        powerMW = availablePower * Math.max(0.0, operationFactor);
+                    } else {
+                        powerMW = availablePower; // Fallback if Hs <= He
+                    }
+                    
+                } else {
+                    // Below ending threshold - stop operation
+                    powerMW = 0.0;
+                    turbineOn = false;
+                }
 
-               // ==========================
-               // POWER GENERATION
-               // ==========================
-               
-               if (turbineOn && headDifference > 0) {
-                    // Calculate flow rate using orifice theory
-                    double theoreticalFlow = totalTurbineArea * Math.sqrt(2 * GRAVITY * headDifference); 
-                    double actualFlow = theoreticalFlow * dischargeCoefficient;
-
-                    // Calculate power and energy 
-                    double powerWatts = actualFlow * WATER_DENSITY * GRAVITY * headDifference;
-                    double powerMW = Math.min(powerWatts * WATTS_TO_MW, maxPowerMW);
+                // ==========================
+                // ENERGY ACCUMULATION & LAGOON UPDATE
+                // ==========================
+                
+                if (powerMW > 0) {
                     double stepEnergy = powerMW * TIME_STEP_HOURS;
                     totalEnergyOutput += stepEnergy;
 
-                    // ===========================
-                    // LAGOON LEVEL UPDATE
-                    // ===========================
-
+                    // Calculate actual flow from power output
+                    double actualFlow = calculateFlowFromPower(powerMW, headDifference);
                     double volumeChange = actualFlow * TIME_STEP_SECONDS;
                     double levelChange = volumeChange / lagoonSurfaceArea;
                     
@@ -144,10 +162,68 @@ public class TidalSimulator {
 
                     // Clamp lagoon level within bounds
                     lagoonLevel = Math.max(MIN_LAGOON_LEVEL, Math.min(lagoonLevel, MAX_LAGOON_LEVEL));
-               }
+                }
             }  
         }
-
         return totalEnergyOutput;
+    }
+
+    /**
+     * Calculate realistic turbine power output using industry-aligned efficiency curves
+     * and explicit generator efficiency (e.g., Andritz Hydro data)
+     */
+    private static double calculateTurbinePower(double headDifference, double totalTurbineArea,
+                                               double maxPowerMW, double dischargeCoefficient) {
+        if (headDifference < MIN_OPERATING_HEAD) {
+            return 0.0; // Below minimum operating head
+        }
+
+        // Hydraulic efficiency from industry hill chart
+        double hydraulicEfficiency = calculateTurbineEfficiency(headDifference);
+
+        // Generator efficiency (typical 97% for large hydro)
+        double generatorEfficiency = 0.97;
+
+        // Overall efficiency
+        double totalEfficiency = hydraulicEfficiency * generatorEfficiency;
+
+        // Flow calculation with discharge coefficient (not including efficiency)
+        double theoreticalFlow = totalTurbineArea * Math.sqrt(2 * GRAVITY * headDifference);
+        double actualFlow = theoreticalFlow * dischargeCoefficient;
+
+        // Power calculation (apply total efficiency to power, not flow)
+        double powerWatts = actualFlow * WATER_DENSITY * GRAVITY * headDifference * totalEfficiency;
+        return Math.min(powerWatts * WATTS_TO_MW, maxPowerMW);
+    }
+    
+    /**
+     * Industry-aligned turbine efficiency curve (e.g., Andritz Hydro hill chart)
+     */
+    private static double calculateTurbineEfficiency(double head) {
+        if (head < MIN_OPERATING_HEAD) return 0.0;
+        if (head < 1.2) {
+            return 0.35 + 0.125 * (head - 1.0);  // 35% → 47.5% (slow startup)
+        } else if (head < 1.8) {
+            return 0.475 + 0.208 * (head - 1.2); // 47.5% → 60% (rapid improvement)
+        } else if (head < 2.5) {
+            return 0.60 + 0.357 * (head - 1.8);  // 60% → 85% (main operating range)
+        } else if (head < 3.2) {
+            return 0.85 + 0.143 * (head - 2.5);  // 85% → 95% (optimal range)
+        } else if (head <= 4.0) {
+            return 0.95; // Peak efficiency plateau
+        } else {
+            // More gradual decline for robustness
+            return 0.95 * Math.exp(-0.03 * (head - 4.0));
+        }
+    }
+    
+    /**
+     * Calculate flow rate from power output (for lagoon level updates)
+     */
+    private static double calculateFlowFromPower(double powerMW, double headDifference) {
+        if (headDifference <= 0 || powerMW <= 0) return 0.0;
+        
+        double powerWatts = powerMW / WATTS_TO_MW;
+        return powerWatts / (WATER_DENSITY * GRAVITY * headDifference);
     }
 }

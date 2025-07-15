@@ -8,7 +8,7 @@ import java.util.*;
  * Operators are designed specifically for tidal lagoon decision variables:
  * - Each half-tide has two control parameters: Hs (starting head) and He (ending head)
  * - Decision vector: [Hs_0, He_0, Hs_1, He_1, ..., Hs_N, He_N]
- * - Constraints: 0.5m ≤ head ≤ 4.0m for all head values
+ * - Constraints: 1.0m ≤ head ≤ 4.0m for all head values
  * 
  * Based on real-coded genetic algorithms for continuous optimisation problems.
  * 
@@ -22,7 +22,7 @@ public class GeneticOperators {
     // ==========================
 
     /** Minimum head value in meters */
-    private static final double MIN_HEAD = 0.5;
+    private static final double MIN_HEAD = 1.0;
 
     /** Maximum head value in meters */
     private static final double MAX_HEAD = 4.0;

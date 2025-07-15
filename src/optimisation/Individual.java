@@ -27,7 +27,7 @@ public class Individual {
     // ====================
 
     /** Minimum head value */
-    private static final double MIN_HEAD = 0.5;
+    private static final double MIN_HEAD = 1.0;
 
     /** Maximum head value */
     private static final double MAX_HEAD = 4.0;
