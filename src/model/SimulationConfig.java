@@ -2,9 +2,10 @@ package src.model;
 
 /**
  * Configuration parameters for tidal lagoon simulation scenarios.
+ * <p>
  * Centralises all simulation-related constants and provides
  * factory methods for different simulation types.
- * 
+ * <p>
  * This class is not meant to be instantiated.
  * All parameters are accessible via static getter methods.
  * 
