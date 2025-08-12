@@ -24,24 +24,34 @@ public class ObjectiveFunction {
     // TEMPORAL CONSTANTS
     // ==========================
 
+    private static final int DAYS_IN_YEAR = 365; // Number of days in a year
+
+    private static final int HOURS_IN_DAY = 24; // Number of hours in a day
+
     /** Number of hours in a year (365 days) */
-    private static final int HOURS_IN_YEAR = 365 * 24; 
+    private static final int HOURS_IN_YEAR = DAYS_IN_YEAR * HOURS_IN_DAY; // 8760 hours
+
+    private static final double ONE_COMPLETE_TIDAL_CYCLE = 360.0 / 28.984; // 360 degrees / 28.984 degrees per hour
+
 
     /** Average duration of a half tide in hours */
-    private static final double HOURS_PER_HALF_TIDE = 6.12; 
+    private static final double HOURS_PER_HALF_TIDE = ONE_COMPLETE_TIDAL_CYCLE / 2.0; // 6.21
 
     // ==========================
     // FINANCIAL PARAMETERS
     // ==========================
 
     /** Project lifetime in years */
-    private static final double PROJECT_LIFETIME_YEARS = 25.0;
+    private static final double PROJECT_LIFETIME_YEARS = 35.0; // based on Swansea Bay CfD submission
 
     /** Discount rate for financial calculations */
-    private static final double DISCOUNT_RATE = 0.06;
+    private static final double DISCOUNT_RATE = 0.06; // 75% debt at 4% + 25% equity at 12% = 6% WACC
 
     // ==========================
-    // LCC COST STRUCTURE
+    // LCC COST STRUCTURE (based on industry standards for large-scale tidal projects)
+    // based on Segura et al. (2017) methodology adapted for 320MW+ scale.
+    // Larger projects have lower relative concept  costs and higher installation costs
+    // and lower manufacturing percentage.
     // ==========================
 
     /** C1: Concept and Definition Costs (5.7% of CAPEX) */
@@ -64,47 +74,50 @@ public class ObjectiveFunction {
     // ==========================
 
     /** Turbine maintenance cost (annual total for all 16 turbines) */
-    private static final double ANNUAL_TURBINE_MAINTENANCE_BASE = 3486000.0; // £3.486M
+    private static final double ANNUAL_TURBINE_MAINTENANCE_BASE = 3486000.0; // £3.486M (checks out)
 
     /** Marine structures maintenance cost (annual total) */
-    private static final double ANNUAL_MARINE_STRUCTURES_MAINTENANCE_BASE = 1459000.0; // £1.459M
+    private static final double ANNUAL_MARINE_STRUCTURES_MAINTENANCE_BASE = 1459000.0; // £1.459M (checks out)
 
     /** Other maintenance cost (annual total) */
-    private static final double ANNUAL_OTHER_MAINTENANCE_BASE = 633000.0; // £0.633M
+    private static final double ANNUAL_OTHER_MAINTENANCE_BASE = 633000.0; // £0.633M (checks out)
 
     /** Periodic maintenance cost (annual total, annualised) */
-    private static final double ANNUAL_PERIODIC_MAINTENANCE_BASE = 1777000.0; // £1.777M
+    private static final double ANNUAL_PERIODIC_MAINTENANCE_BASE = 1777000.0; // £1.777M (checks out)
 
     // OPERATIONAL COSTS (Annual totals for entire project)
 
     /** Insurance cost (annual total - FIXED amount, not percentage) */
-    private static final double ANNUAL_INSURANCE_COST_BASE = 2300000.0; // £2.3M
+    private static final double ANNUAL_INSURANCE_COST_BASE = 2300000.0; // £2.3M (checks out)
 
     /** Land cost (annual total) */
-    private static final double ANNUAL_LAND_COST_BASE = 1700000.0; // £1.7M
+    private static final double ANNUAL_LAND_COST_BASE = 1700000.0; // £1.7M (checks out)
 
     /** Other operational costs (annual total) */
-    private static final double ANNUAL_OTHER_OPERATIONAL_COST_BASE = 1300000.0; // £1.3M
+    private static final double ANNUAL_OTHER_OPERATIONAL_COST_BASE = 1300000.0; // £1.3M (checks out)
 
     /** Regulatory and business charges (annual total) */
-    private static final double ANNUAL_REGULATORY_COST_BASE = 3649000.0; // £3.649M
+    private static final double ANNUAL_REGULATORY_COST_BASE = 3649000.0; // TNUoS + BSUoS + Business rates (£3.649M, checks out)
 
 
     // ==========================
     // OPERATIONAL COMPLEXITY FACTORS
     // ==========================
 
-    /** Head variation threshold for increased maintenance complexity */
-    private static final double HEAD_VARIATION_THRESHOLD = 3.5; // meters
+    /** Maximum physically possible head variation given constraints */
+    private static final double MAX_POSSIBLE_HEAD_VARIATION = 3.0; // 4.0 - 1.0
 
-    /** Maximum head variation before extreme costs */
-    private static final double MAX_SAFE_HEAD_VARIATION = 5.0; // meters
+    /** Optimal head variation threshold (from Petley & Aggidis 2016) */
+    private static final double OPTIMAL_HEAD_VARIATION_THRESHOLD = 1.5; // m
+
+    /** Engineering-safe head variation limit */
+    private static final double MAX_SAFE_HEAD_VARIATION = 2.5; // m (within physical limits)
 
     /** Operation frequency threshold (operations per half-tide) */
-    private static final double HIGH_FREQUENCY_THRESHOLD = 0.8;
+    private static final double HIGH_FREQUENCY_THRESHOLD = 0.8; // Engineering assumption based on turbine operation frequency
 
     /** Capacity factor threshold for realistic operation */
-    private static final double MIN_REALISTIC_CAPACITY_FACTOR = 0.15;
+    private static final double MIN_REALISTIC_CAPACITY_FACTOR = 0.189; // (572GWh / 320MW / 8760h) based on CfD data
 
     // ==========================
     // EVALUATION METHODS
@@ -189,8 +202,7 @@ public class ObjectiveFunction {
 
     /**
      * Calculates the Levelised Cost of Energy (LCOE) using Segura
-     * et al. (2017) methodology. Replaces artificial penalties with
-     * realistic LCC components.
+     * et al. (2017) methodology. Pure literature approach: no artificial penalties.
      * 
      * @param individual Individual solution
      * @param annualEnergyOutput Annual energy output (MWh/year)
@@ -201,42 +213,20 @@ public class ObjectiveFunction {
             return Double.MAX_VALUE; // Invalid solution
         }
 
-        // ==========================
         // BASE CAPITAL COSTS
-        // ==========================
-
         double capitalCost = Lagoon.getTotalCapitalCost();
-        double installedCapacityMW = Lagoon.getInstalledCapacityMW();
 
-        // ==========================
         // LCC COMPONENTS
-        // ==========================
-
-        /** C1: Concept and Definition Costs */
         double conceptDefinitionCost = capitalCost * CONCEPT_DEFINITION_RATIO;
-
-        /** C2: Design and Development Costs */
         double designDevelopmentCost = capitalCost * DESIGN_DEVELOPMENT_RATIO;
-
-        /** C3: Manufacturing Costs */
         double manufacturingComplexityFactor = calculateManufacturingComplexityFactor(individual);
         double manufacturingCost = capitalCost * MANUFACTURING_BASE_RATIO * manufacturingComplexityFactor;
-
-        /** C4: Installation Costs */
         double installationComplexityFactor = calculateInstallationComplexityFactor(individual);
         double installationCost = capitalCost * INSTALLATION_BASE_RATIO * installationComplexityFactor;
-
-        /** C5: Operation and Maintenance Costs */
         double annualOandMCost = calculateSwanseaBayOMCosts(individual);
-
-        /** C6: Decommissioning Costs */
         double decommissioningCost = capitalCost * DECOMMISSIONING_RATIO;
 
-        // ==========================
         // TOTAL LIFE CYCLE COST
-        // ==========================
-
-        /** Calculate CAPEX */
         double totalCapex = conceptDefinitionCost + designDevelopmentCost + manufacturingCost +
                             installationCost + decommissioningCost;
 
@@ -245,16 +235,11 @@ public class ObjectiveFunction {
 
         double annualisedCapitalCost = totalCapex * capitalRecoveryFactor;
 
-        /** Total annual costs */
+        // TOTAL ANNUAL COSTS
         double totalAnnualCost = annualisedCapitalCost + annualOandMCost;
 
-        // ==========================
-        // LCOE CALCULATION
-        // ==========================
-
-        double lcoe = totalAnnualCost / annualEnergyOutput;
-        lcoe += calculateConstraintPenalties(individual, annualEnergyOutput, installedCapacityMW);
-        return lcoe; // LCOE in £/MWh
+        // LCOE CALCULATION (no penalties)
+        return totalAnnualCost / annualEnergyOutput;
     }
 
     // ==========================
@@ -264,15 +249,19 @@ public class ObjectiveFunction {
     /**
      * Calculates manufacturing complexity factor based on expected operational stress.
      * Higher head variations require more robust equipment.
+     * 
+     * Engineering assumption:
+     * - 10% increase for extreme operations (headVariation > MAX_SAFE_HEAD_VARIATION)
+     * - 3% per meter above optimal threshold (headVariation > OPTIMAL_HEAD_VARIATION_THRESHOLD)
      */
     private static double calculateManufacturingComplexityFactor(Individual individual) {
         double headVariation = calculateHeadVariation(individual);
         
         // Increased manufacturing costs for high-stress operations
         if (headVariation > MAX_SAFE_HEAD_VARIATION) {
-            return 1.10; // 10% increase for extreme operations
-        } else if (headVariation > HEAD_VARIATION_THRESHOLD) {
-            return 1.0 + (headVariation - HEAD_VARIATION_THRESHOLD) * 0.03; // Linear increase
+            return 1.10; // Engineering assumption: 10% increase for extreme operations
+        } else if (headVariation > OPTIMAL_HEAD_VARIATION_THRESHOLD) {
+            return 1.0 + (headVariation - OPTIMAL_HEAD_VARIATION_THRESHOLD) * 0.03; // Engineering assumption: 3% per meter
         }
         
         return 1.0; // No increase for normal operations
@@ -299,6 +288,12 @@ public class ObjectiveFunction {
     /**
      * Calculates realistic Operation & Maintenance costs using ACTUAL Swansea Bay CfD data.
      * Costs increase with operational complexity and frequency based on real project baseline.
+     * 
+     * Engineering assumptions:
+     * - Turbine maintenance: 15% per meter above optimal threshold
+     * - Marine structures: 10% per meter above optimal threshold
+     * - Periodic maintenance: 25% more frequent for high-frequency operations
+     * - Insurance: 25% increase for high-risk operations, 10% per meter above optimal threshold
      */
     private static double calculateSwanseaBayOMCosts(Individual individual) {
         // Calculate operational complexity factors
@@ -311,15 +306,15 @@ public class ObjectiveFunction {
         
         // Turbine maintenance increases with operational stress
         double turbineMaintenanceComplexityFactor = 1.0;
-        if (headVariation > HEAD_VARIATION_THRESHOLD) {
-            turbineMaintenanceComplexityFactor = 1.0 + (headVariation - HEAD_VARIATION_THRESHOLD) * 0.15;
+        if (headVariation > OPTIMAL_HEAD_VARIATION_THRESHOLD) {
+            turbineMaintenanceComplexityFactor = 1.0 + (headVariation - OPTIMAL_HEAD_VARIATION_THRESHOLD) * 0.15;
         }
         double annualTurbineMaintenanceCosts = ANNUAL_TURBINE_MAINTENANCE_BASE * turbineMaintenanceComplexityFactor;
 
         // Marine structures maintenance (less affected by operational complexity)
         double marineStructureComplexityFactor = 1.0;
-        if (headVariation > HEAD_VARIATION_THRESHOLD) {
-            marineStructureComplexityFactor = 1.0 + (headVariation - HEAD_VARIATION_THRESHOLD) * 0.1;
+        if (headVariation > OPTIMAL_HEAD_VARIATION_THRESHOLD) {
+            marineStructureComplexityFactor = 1.0 + (headVariation - OPTIMAL_HEAD_VARIATION_THRESHOLD) * 0.1;
         }
         double annualMarineStructureMaintenanceCosts = ANNUAL_MARINE_STRUCTURES_MAINTENANCE_BASE * marineStructureComplexityFactor;
 
@@ -329,7 +324,7 @@ public class ObjectiveFunction {
         // Periodic maintenance increases with operational frequency
         double periodicMaintenanceFrequencyFactor = 1.0;
         if (operationFrequency > HIGH_FREQUENCY_THRESHOLD) {
-            periodicMaintenanceFrequencyFactor = 1.25; // 25% more frequent
+            periodicMaintenanceFrequencyFactor = 1.25; // Engineering assumption: 25% more frequent
         }
         double annualPeriodicMaintenanceCosts = ANNUAL_PERIODIC_MAINTENANCE_BASE * periodicMaintenanceFrequencyFactor;
 
@@ -340,9 +335,9 @@ public class ObjectiveFunction {
         // Insurance costs (FIXED amount, not percentage - may increase with risk)
         double insuranceRiskFactor = 1.0;
         if (headVariation > MAX_SAFE_HEAD_VARIATION) {
-            insuranceRiskFactor = 1.25; // 25% increase for high-risk operations
-        } else if (headVariation > HEAD_VARIATION_THRESHOLD) {
-            insuranceRiskFactor = 1.0 + (headVariation - HEAD_VARIATION_THRESHOLD) * 0.1;
+            insuranceRiskFactor = 1.25; // Engineering assumption: 25% increase for high-risk operations
+        } else if (headVariation > OPTIMAL_HEAD_VARIATION_THRESHOLD) {
+            insuranceRiskFactor = 1.0 + (headVariation - OPTIMAL_HEAD_VARIATION_THRESHOLD) * 0.1;
         }
         double annualInsuranceCosts = ANNUAL_INSURANCE_COST_BASE * insuranceRiskFactor;
 
@@ -363,46 +358,6 @@ public class ObjectiveFunction {
                annualOtherMaintenanceCosts + annualPeriodicMaintenanceCosts +
                annualInsuranceCosts + annualLandCosts + 
                annualOtherOperationalCosts + annualRegulatoryCosts;
-    }
-
-    // ==========================
-    // CONSTRAINT PENALTIES
-    // ==========================
-
-    /**
-     * Applies realistic constraint penalties for infeasible operations.
-     * These represent actual engineering and economic constraints.
-     * Recalibrated to allow literature-based head ranges (1.0-4.0m).
-     */
-    private static double calculateConstraintPenalties(Individual individual, double annualEnergyOutput, 
-                                                     double installedCapacityMW) {
-        double penalty = 0.0;
-
-        // ==========================
-        // CAPACITY FACTOR CONSTRAINTS
-        // ==========================
-        
-        double capacityFactor = (annualEnergyOutput / 8760.0) / installedCapacityMW;
-        
-        if (capacityFactor < MIN_REALISTIC_CAPACITY_FACTOR) {
-            // More gradual penalty for low capacity factors
-            double shortfall = MIN_REALISTIC_CAPACITY_FACTOR - capacityFactor;
-            penalty += shortfall * 300.0; // £300/MWh penalty for poor economics
-        }
-
-        // ==========================
-        // EXTREME OPERATION PENALTIES
-        // ==========================
-        
-        double headVariation = calculateHeadVariation(individual);
-        
-        if (headVariation > MAX_SAFE_HEAD_VARIATION) {
-            // More gradual penalties for operations beyond safe limits
-            double excessVariation = headVariation - MAX_SAFE_HEAD_VARIATION;
-            penalty += excessVariation * 50.0; // £50/MWh per meter of excess variation
-        }
-
-        return penalty;
     }
 
     // ==========================

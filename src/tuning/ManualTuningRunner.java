@@ -36,11 +36,11 @@ public class ManualTuningRunner {
     /** Testing phase: TUNING, VALIDATION, BENCHMARKING */
     private static final String TEST_PHASE = "TUNING";
 
-    /** Dataset selection: 2011, 2010, or BOTH */
-    private static final String DATASET_YEAR = "2011";
+    /** Dataset selection: 2011, 2012, or BOTH */
+    private static final String DATASET_YEAR = "2012";
 
     /** Descriptive name for current test configuration */
-    private static final String TEST_NAME = "Pop400_Pc09_Pm01_SBX_POLY_ANNUAL_DEBUG";
+    private static final String TEST_NAME = "Pop400_Pc09_Pm015_HALFTIDE_GAUSSIAN_ANNUAL_TUNING_2D_TOURNAMENT_SIZE_4";
 
     // ======================
     // ALGORITHM PARAMETERS
@@ -119,17 +119,17 @@ public class ManualTuningRunner {
         NSGA2Config config = createTestConfiguration();
         List<TuningResult> results2011 = runMultipleTrials(config, tideData2011, "2011");
         
-        // Execute on 2010 dataset
-        List<Double> tideData2010 = loadTideData("2010");
-        List<TuningResult> results2010 = runMultipleTrials(config, tideData2010, "2010");
+        // Execute on 2012 dataset
+        List<Double> tideData2012 = loadTideData("2012");
+        List<TuningResult> results2012 = runMultipleTrials(config, tideData2012, "2012");
         
         // Comprehensive comparison analysis
-        printCombinedResults(results2011, results2010);
-        printCombinedExcelFormat(results2011, results2010);
+        printCombinedResults(results2011, results2012);
+        printCombinedExcelFormat(results2011, results2012);
         
         // Archive both result sets
         saveResults("2011", results2011);
-        saveResults("2010", results2010);
+        saveResults("2012", results2012);
     }
 
     // ==========================
@@ -139,7 +139,7 @@ public class ManualTuningRunner {
     /**
      * Loads tidal data for the specified year.
      * 
-     * @param year Dataset year ("2011" or "2010")
+     * @param year Dataset year ("2011" or "2012")
      * @return List of tidal heights in meters
      * @throws IOException if file reading fails
      * @throws IllegalArgumentException if year is not supported
@@ -148,14 +148,14 @@ public class ManualTuningRunner {
         String filename;
         switch (year) {
             case "2011":
-                filename = "data/b1111463.txt";
+                filename = "data/2011MUM.txt";
                 break;
-            case "2010":
-                filename = "data/b1111451.txt";
+            case "2012":
+                filename = "data/2012MUM.txt";
                 break;
             default:
                 throw new IllegalArgumentException("Unsupported year: " + year + 
-                    ". Supported years: 2011, 2010");
+                    ". Supported years: 2011, 2012");
         }
         
         System.out.println("Loading " + year + " data from: " + filename);
@@ -163,6 +163,11 @@ public class ManualTuningRunner {
 
         if (data.size() > 2640 && year.equals("2011")) {
             System.out.println("Truncating 2011 data from " + data.size() + " to 2640 points for comparison");
+            data = data.subList(0, 2640);
+        }
+
+        if (data.size() > 2640 && year.equals("2012")) {
+            System.out.println("Truncating 2012 data from " + data.size() + " to 2640 points for comparison");
             data = data.subList(0, 2640);
         }
 
@@ -292,22 +297,22 @@ public class ManualTuningRunner {
      * Includes robustness assessment based on energy differences.
      * 
      * @param results2011 Results from 2011 dataset
-     * @param results2010 Results from 2010 dataset
+     * @param results2012 Results from 2012 dataset
      */
     private static void printCombinedResults(List<TuningResult> results2011, 
-                                           List<TuningResult> results2010) {
+                                           List<TuningResult> results2012) {
         System.out.println("\n--- ROBUSTNESS ANALYSIS ---");
         
         double mean2011 = mean(results2011.stream().mapToDouble(r -> r.maxEnergy).toArray()) / 1000;
-        double mean2010 = mean(results2010.stream().mapToDouble(r -> r.maxEnergy).toArray()) / 1000;
-        double difference = ((mean2011 - mean2010) / mean2010) * 100;
+        double mean2012 = mean(results2012.stream().mapToDouble(r -> r.maxEnergy).toArray()) / 1000;
+        double difference = ((mean2011 - mean2012) / mean2012) * 100;
         
         System.out.printf("2011 Energy: %.1f ± %.1f GWh\n", mean2011,
                 std(results2011.stream().mapToDouble(r -> r.maxEnergy).toArray()) / 1000);
-        System.out.printf("2010 Energy: %.1f ± %.1f GWh\n", mean2010,
-                std(results2010.stream().mapToDouble(r -> r.maxEnergy).toArray()) / 1000);
-        System.out.printf("Difference: %+.1f%% (2011 vs 2010)\n", difference);
-        
+        System.out.printf("2012 Energy: %.1f ± %.1f GWh\n", mean2012,
+                std(results2012.stream().mapToDouble(r -> r.maxEnergy).toArray()) / 1000);
+        System.out.printf("Difference: %+.1f%% (2011 vs 2012)\n", difference);
+
         // Robustness assessment
         if (Math.abs(difference) <= EXCELLENT_ROBUSTNESS) {
             System.out.println("Excellent robustness: <5% difference between datasets");
@@ -347,16 +352,16 @@ public class ManualTuningRunner {
      * Prints combined Excel format for both datasets.
      * 
      * @param results2011 Results from 2011 dataset
-     * @param results2010 Results from 2010 dataset
+     * @param results2012 Results from 2012 dataset
      */
     private static void printCombinedExcelFormat(List<TuningResult> results2011, 
-                                               List<TuningResult> results2010) {
+                                               List<TuningResult> results2012) {
         System.out.println("\n--- COMBINED EXCEL FORMAT ---");
         System.out.println("Test\tPhase\tDataset\tPopulation\tCrossover\tMutation\t" +
                           "CrossoverType\tMutationType\tRun\tMaxEnergy\tParetoSize\t" +
                           "ExecutionTime\tGenerations\tConverged\tMinCost");
         printExcelDataRows("2011", results2011);
-        printExcelDataRows("2010", results2010);
+        printExcelDataRows("2012", results2012);
     }
 
     /**
@@ -541,7 +546,7 @@ public class ManualTuningRunner {
         /** Trial run number (1-based) */
         final int runNumber;
         
-        /** Dataset identifier (e.g., "2011", "2010") */
+        /** Dataset identifier (e.g., "2011", "2012") */
         final String dataset;
         
         /** Maximum energy output achieved (MWh) */

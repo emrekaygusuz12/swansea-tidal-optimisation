@@ -2,20 +2,23 @@ package src.optimisation;
 
 import java.util.*;
 
-
 /**
- * Calculates crowding distance for diversity preservation in NSGA-II.
+ * Utility class for calculating crowding distance in NSGA-II for diversity preservation.
  * 
  * Crowding distance measures how close an individual is to its neighbours
  * in objective space. Higher crowding distance indicates more isolated solutions,
  * which helps maintain diversity in the Pareto front.
  * 
  * For tidal lagoon optimisation with objectives:
- * - Energy Output (maximise) 
- * - Unit Cost (minimise)
+ * > Maximise energy output (GWh)
+ * > Minimise unit cost (£/MWh)
  * 
- * Based on the crowding distance algorithm from Deb et al. (2002).
+ * Based on the crowding distance algorithm from Deb et al. (2002) "A Fast and Elitist
+ * Multiobjective Genetic Algorithm: NSGA-II".
  * 
+ * This class is not meant to be instantiated.
+ * All methods are static and should be accessed via the class name.
+ *
  * @author Emre Kaygusuz
  * @version 1.0
  */

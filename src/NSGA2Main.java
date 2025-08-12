@@ -31,7 +31,7 @@ import java.util.HashMap;
 public class NSGA2Main {
 
     private static Map<String, Double> optimisationResults = new HashMap<>();
-    private static final String TIDE_DATA_FILE = "data/b1111463.txt";
+    private static final String TIDE_DATA_FILE = "data/2012MUM.txt";
 
     public static void main(String[] args) {
         System.out.println("\nStarting NSGA-II optimisation for Swansea Bay Tidal Lagoon...");

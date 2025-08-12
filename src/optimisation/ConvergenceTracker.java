@@ -2,16 +2,44 @@ package src.optimisation;
 
 import java.util.*;
 
+/**
+ * Tracks convergence metrics for multi-objective optimisation.
+ * 
+ * Records Pareto front statistics, hypervolume, and diversity measures for each generation.
+ * Provides multiple convergence criteria (hypervolume, energy, diversity) and
+ * generates a summary report upon completion.
+ * 
+ * Designed for use in evolutionary or population-based optimisation of tidal lagoon scenarios.
+ * 
+ * @author Emre Kaygusuz
+ * @version 1.0
+ */
 public class ConvergenceTracker {
 
+    /** History of convergence metrics for each generation */
     private final List<ConvergenceMetrics> generationHistory;
+
+    /** Number of generations to check for stagnation */
     private final int stagnationThreshold;
+
+    /** Minimum improvement required to avoid convergence */
     private final double improvementThreshold;
 
+    /** Whether convergence has been achieved */
     private boolean convergenceAchieved;
+
+    /** Generation at which convergence was detected */
     private int convergenceGeneration;
+
+    /** Human-readable reason for convergence */
     private String convergenceReason;
 
+    /**
+     * Constructs a new ConvergenceTracker with specified convergence criteria.
+     *
+     * @param stagnationThreshold Number of generations to check for stagnation
+     * @param improvementThreshold Minimum improvement required to avoid convergence
+     */
     public ConvergenceTracker(int stagnationThreshold, double improvementThreshold) {
         this.generationHistory = new ArrayList<>();
         this.stagnationThreshold = stagnationThreshold;
@@ -21,6 +49,14 @@ public class ConvergenceTracker {
         this.convergenceReason = "Not converged";
     }
 
+    /**
+     * Records metrics for a new generation and checks for convergence.
+     *
+     * @param generation Current generation number
+     * @param paretoFront List of individuals in the Pareto front
+     * @param hypervolume Calculated hypervolume for the Pareto front
+     * @return true if convergence criteria are met, false otherwise
+     */
     public boolean recordGeneration(int generation, List<Individual> paretoFront, double hypervolume) {
         ConvergenceMetrics metrics = calculateMetrics(generation, paretoFront, hypervolume);
         generationHistory.add(metrics);
@@ -34,9 +70,14 @@ public class ConvergenceTracker {
         return convergenceAchieved;
     }
 
-     /**
+    /**
      * Calculates comprehensive metrics for convergence analysis.
-     */
+     *
+     * @param generation Current generation number
+     * @param paretoFront List of individuals in the Pareto front
+     * @param hypervolume Calculated hypervolume for the Pareto front
+     * @return ConvergenceMetrics object containing calculated metrics
+     */ 
     private ConvergenceMetrics calculateMetrics(int generation, List<Individual> paretoFront, double hypervolume) {
         if (paretoFront.isEmpty()) {
             return new ConvergenceMetrics(generation, 0, 0.0, 0.0, hypervolume, 0.0, 0.0, 0.0);
@@ -64,7 +105,10 @@ public class ConvergenceTracker {
     }
     
     /**
-     * Checks multiple convergence criteria.
+     * Checks multiple convergence criteria (hypervolume, energy, diversity).
+     *
+     * @param generation Current generation number
+     * @param current Current generation metrics
      */
     private void checkConvergence(int generation, ConvergenceMetrics current) {
         if (generationHistory.size() < stagnationThreshold) {
@@ -81,7 +125,11 @@ public class ConvergenceTracker {
     }
     
     /**
-     * Check hypervolume-based convergence.
+     * Checks for convergence based on hypervolume stagnation.
+     *
+     * @param generation Current generation number
+     * @param current Current generation metrics
+     * @param comparison Comparison generation metrics
      */
     private void checkHypervolumeConvergence(int generation, ConvergenceMetrics current, ConvergenceMetrics comparison) {
         if (convergenceAchieved) return;
@@ -97,7 +145,11 @@ public class ConvergenceTracker {
     }
     
     /**
-     * Check energy-based convergence.
+     * Checks for convergence based on maximum energy stagnation.
+     *
+     * @param generation Current generation number
+     * @param current Current generation metrics
+     * @param comparison Comparison generation metrics
      */
     private void checkEnergyConvergence(int generation, ConvergenceMetrics current, ConvergenceMetrics comparison) {
         if (convergenceAchieved) return;
@@ -113,7 +165,11 @@ public class ConvergenceTracker {
     }
     
     /**
-     * Check diversity-based convergence.
+     * Checks for convergence based on diversity (Pareto front size and energy spread).
+     *
+     * @param generation Current generation number
+     * @param current Current generation metrics
+     * @param comparison Comparison generation metrics
      */
     private void checkDiversityConvergence(int generation, ConvergenceMetrics current, ConvergenceMetrics comparison) {
         if (convergenceAchieved) return;
@@ -130,7 +186,10 @@ public class ConvergenceTracker {
     }
     
     /**
-     * Calculate energy spread (diversity measure).
+     * Calculates the spread of energy outputs in the Pareto front.
+     *
+     * @param paretoFront List of individuals in the Pareto front
+     * @return Normalized energy spread value
      */
     private double calculateEnergySpread(List<Individual> paretoFront) {
         if (paretoFront.size() < 2) return 0.0;
@@ -138,11 +197,14 @@ public class ConvergenceTracker {
         double min = paretoFront.stream().mapToDouble(Individual::getEnergyOutput).min().orElse(0.0);
         double max = paretoFront.stream().mapToDouble(Individual::getEnergyOutput).max().orElse(0.0);
         
-        return (max - min) / Math.max(max, 1.0); // Normalized spread
+        return (max - min) / Math.max(max, 1.0); // Normalised spread
     }
     
     /**
-     * Calculate cost spread (diversity measure).
+     * Calculates the spread of unit costs in the Pareto front.
+     *
+     * @param paretoFront List of individuals in the Pareto front
+     * @return Normalized cost spread value
      */
     private double calculateCostSpread(List<Individual> paretoFront) {
         if (paretoFront.size() < 2) return 0.0;
@@ -158,11 +220,13 @@ public class ConvergenceTracker {
         double min = validCosts.stream().mapToDouble(Double::doubleValue).min().orElse(0.0);
         double max = validCosts.stream().mapToDouble(Double::doubleValue).max().orElse(0.0);
         
-        return (max - min) / Math.max(max, 1.0); // Normalized spread
+        return (max - min) / Math.max(max, 1.0); 
     }
     
     /**
-     * Print detailed convergence progress.
+     * Prints a summary of convergence progress for the current generation.
+     *
+     * @param metrics Current generation metrics
      */
     private void printProgress(ConvergenceMetrics metrics) {
         System.out.printf("Generation %d: PF=%d, Energy=%.1f GWh, Cost=\u00A3%.0f/MWh, HV=%.2e, Spread=%.4f%n",
@@ -175,7 +239,9 @@ public class ConvergenceTracker {
     }
     
     /**
-     * Get convergence summary for final reporting.
+     * Returns a summary of convergence status and progress.
+     *
+     * @return ConvergenceSummary object containing convergence details
      */
     public ConvergenceSummary getConvergenceSummary() {
         if (generationHistory.isEmpty()) {
@@ -190,7 +256,7 @@ public class ConvergenceTracker {
     }
     
     /**
-     * Data class for storing metrics per generation.
+     * Immutable data class for stroring metrics per generation.
      */
     public static class ConvergenceMetrics {
         public final int generation;
@@ -202,6 +268,18 @@ public class ConvergenceTracker {
         public final double energySpread;
         public final double costSpread;
         
+        /**
+         * Constructs a new ConvergenceMetrics object.
+         *
+         * @param generation Current generation number
+         * @param paretoSize Size of the Pareto front
+         * @param maxEnergy Maximum energy output in MWh
+         * @param avgEnergy Average energy output in MWh
+         * @param hypervolume Calculated hypervolume for the Pareto front
+         * @param minCost Minimum unit cost in \u00A3/MWh
+         * @param energySpread Normalized energy spread value
+         * @param costSpread Normalized cost spread value
+         */
         public ConvergenceMetrics(int generation, int paretoSize, double maxEnergy, double avgEnergy,
                                 double hypervolume, double minCost, double energySpread, double costSpread) {
             this.generation = generation;
@@ -216,7 +294,7 @@ public class ConvergenceTracker {
     }
     
     /**
-     * Data class for convergence summary.
+     * Immutable data class for summarising convergence status and progress.
      */
     public static class ConvergenceSummary {
         public final boolean converged;
@@ -225,6 +303,15 @@ public class ConvergenceTracker {
         public final ConvergenceMetrics firstGeneration;
         public final ConvergenceMetrics lastGeneration;
         
+        /**
+         * Constructs a new ConvergenceSummary object.
+         *
+         * @param converged Whether convergence was achieved
+         * @param convergenceGeneration Generation at which convergence was detected
+         * @param reason Human-readable reason for convergence
+         * @param firstGeneration Metrics from the first generation
+         * @param lastGeneration Metrics from the last generation
+         */
         public ConvergenceSummary(boolean converged, int convergenceGeneration, String reason,
                                 ConvergenceMetrics firstGeneration, ConvergenceMetrics lastGeneration) {
             this.converged = converged;

@@ -198,19 +198,19 @@ public class NSGA2Config {
         double finalMutationRate = Math.max(adaptiveMutationRate, MIN_MUTATION_RATE);
 
         return new Builder()
-                .populationSize(800)
-                .maxGenerations(400)
-                .crossoverProbability(0.92)
-                .mutationProbability(finalMutationRate * 2.5)
-                .crossoverType("SBX")
-                .mutationType("POLYNOMIAL")
+                .populationSize(400)
+                .maxGenerations(300)
+                .crossoverProbability(0.9)
+                .mutationProbability(0.015)
+                .crossoverType("HALFTIDE")
+                .mutationType("GAUSSIAN")
                 .halfTides(simParameters.getHalfTides())
                 .simulationDescription(simParameters.getDescription())
-                .convergenceThreshold(0.0005)
+                .convergenceThreshold(0.01)
                 .stagnationGenerations(50)
-                .tournamentSize(3)
+                .tournamentSize(4)
                 .elitism(true)
-                .randomSeed(42L)
+                .randomSeed(System.currentTimeMillis())
                 .build();
     }
 

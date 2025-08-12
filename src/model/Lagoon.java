@@ -2,12 +2,12 @@ package src.model;
 
 /**
  * Represents the fixed configuration of the Swansea Bay Tidal Lagoon for simulation and optimisation.
- * <p>
+ * 
  * Constants are grouped by category: turbine, sluice, grid, and economic parameters.
  * This class is not meant to be instantiated.
- * <p>
+ * 
  * All parameters are accessible via static getter methods.
- * <p>
+ * 
  * All the configuration parameters are based on Moreira et al. (2022) "Control Optimisation Baselines
  * for Tidal Range Structures—CoBaseTRS" and economic parameters are based on the Swansea Bay Tidal Lagoon
  * Contract for Difference (CfD) signed in 2015. All parameters are checked against the original sources.
@@ -29,7 +29,7 @@ public final class Lagoon {
     // ======================
 
     /** Number of turbines in the lagoon */
-    private static final int NUMBER_OF_TURBINES = 16; // 16 turbines
+    private static final int NUMBER_OF_TURBINES = 16; 
 
     /** Capacity of each turbine in megawatts (MW) */
     private static final double TURBINE_CAPACITY_MW = 20.0;  // 20 MW per turbine
@@ -38,7 +38,7 @@ public final class Lagoon {
     private static final double TURBINE_DIAMETER_M = 7.35; // 7.35 m
 
     /** Discharge coefficient of the turbine, representing its efficiency */
-    private static final double TURBINE_DISCHARGE_COEFFICIENT = 1.36; // 1.36
+    private static final double TURBINE_DISCHARGE_COEFFICIENT = 1.36; // 1.36 (dimensionless)
 
     /** Operating orientation of the turbines */
     private static final Orientation TURBINE_ORIENTATION = Orientation.BIDIRECTIONAL; 

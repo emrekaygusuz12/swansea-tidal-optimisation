@@ -123,3 +123,41 @@ FREQUENCY_COST = 3.0;           // ❓ No real-world validation
 
  alderney 43 smaller turbines
  swansea 16 larger turbines.
+
+My operational strategy can only influence that tiny 3% variable portion, which
+explains the 0.7% variation. This analysis suggests that for real tidal lagoons
+capital costs dominate, operational strategy has minimal cost impact,
+the optimisation problem is naturally single-objective: maximise energy subject
+to operational constraints which is actually supported by real tidal energy literature,
+which is why most studies focus on energy maximisation rather than cost trade-offs.
+
+i can increase the diversity and spread by tuning complexity factors but that gets me
+more solutions with same energy generation and cost with different sample strategies which
+explains the first paragraph.
+
+This is why governtment funds make a huge difference. CfD paper.
+
+   
+Despite 2010 having higher mean tidal heights (5.21m vs  4.86m), it produces lower energy.
+This reveals:
+> Tidal range patterns matter more than average height
+> spring/neap cycle distribution affects optimisation opportunities
+> Timing of peak tides influences energy extraction efficiency
+
+Scientific Value 📚
+
+Real-world variability: 9-11% year-to-year differences are realistic
+Algorithm robustness: Consistent convergence across datasets
+Tidal physics: Mean height ≠ energy potential (important finding!)
+Economic impact: Tidal variations significantly affect project viability
+
+Key Insights for Your Thesis 🏆
+
+Multi-year validation is crucial - single-year studies may be misleading
+Tidal energy optimization is year-dependent - affects economic planning
+Your algorithm performs robustly across different tidal conditions
+Energy estimates should include uncertainty ranges based on tidal variability
+
+
+explain why some crossover and mutation methods outperform others in energy
+generation, minimising cost, and execution time.

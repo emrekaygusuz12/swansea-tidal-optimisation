@@ -27,9 +27,6 @@ public class NextGenerationSelection {
     /** Default size of tournament for selection */
     private static final int DEFAULT_TOURNAMENT_SIZE = 2;
 
-    /** Numerical tolerance for individual comparison */
-    private static final double COMPARISON_TOLERANCE = 1e-9;
-
     // ==========================
     // THREAD-LOCAL RANDOM
     // ==========================

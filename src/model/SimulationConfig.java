@@ -2,10 +2,10 @@ package src.model;
 
 /**
  * Configuration parameters for tidal lagoon simulation scenarios.
- * <p>
+ * 
  * Centralises all simulation-related constants and provides
  * factory methods for different simulation types.
- * <p>
+ * 
  * This class is not meant to be instantiated.
  * All parameters are accessible via static getter methods.
  * 
@@ -18,8 +18,11 @@ public final class SimulationConfig {
     // TEMPORAL CONFIGURATION
     // =======================
 
-    /** Duration of half tide cycle in hours */
-    private static final double HOURS_PER_HALF_TIDE = 6.12;
+    private static final double ONE_COMPLETE_TIDAL_CYCLE = 360.0 / 28.984; // 360 degrees / 28.984 degrees per hour
+
+
+    /** Average duration of a half tide in hours */
+    private static final double HOURS_PER_HALF_TIDE = ONE_COMPLETE_TIDAL_CYCLE / 2.0; // 6.21
 
     /** Number of readings per half tide cycle */
     private static final int READINGS_PER_HALF_TIDE = 24;

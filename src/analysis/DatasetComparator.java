@@ -19,43 +19,37 @@ public class DatasetComparator {
         // Load both datasets
         System.out.println("Loading datasets...\n");
 
-        List<Double> data_2011 = TideDataReader.readTideHeights("data/b1111463.txt");
-        List<Double> data_2010 = loadData2010();
+        List<Double> data_2011 = TideDataReader.readTideHeights("data/2011MUM.txt");
+        List<Double> data_2012 = TideDataReader.readTideHeights("data/2012MUM.txt");
 
-        compareDatasetCharacteristics(data_2011, data_2010);
-        compareBaselinePerformance(data_2011, data_2010);
+        compareDatasetCharacteristics(data_2011, data_2012);
+        compareBaselinePerformance(data_2011, data_2012);
 
         System.out.println("\n=== ANALYSIS COMPLETE ===");
     }
 
-    /**
-     * Loads 2010 tidal data 
-     */
-    private static List<Double> loadData2010() throws IOException {
-        return TideDataReader.readTideHeights("data/b1111451.txt");
-    }
 
     /**
      * Compares baseline characteristics of two datasets.
      */
-    private static void compareDatasetCharacteristics(List<Double> data2011, List<Double> data2010) {
+    private static void compareDatasetCharacteristics(List<Double> data2011, List<Double> data2012) {
         System.out.println("Comparing dataset characteristics...\n");
 
         // Calculate statistics
         DatasetStats stats2011 = calculateStats(data2011, "2011");
-        DatasetStats stats2010 = calculateStats(data2010, "2010");
+        DatasetStats stats2012 = calculateStats(data2012, "2012");
 
         // Print statistics
         System.out.printf("%-20s %-12s %-12s %-12s %-12s\n", 
-                "Metric", "2011 Value", "2010 Value", "Abs Diff", "Pct Diff");
+                "Metric", "2011 Value", "2012 Value", "Abs Diff", "Pct Diff");
         System.out.println("-".repeat(68));
 
-        printComparison("Data Points", stats2011.dataPoints, stats2010.dataPoints);
-        printComparison("Mean Height (m)", stats2011.mean, stats2010.mean);
-        printComparison("Max Height (m)", stats2011.max, stats2010.max);
-        printComparison("Min Height (m)", stats2011.min, stats2010.min);
-        printComparison("Tidal Range (m)", stats2011.range, stats2010.range);
-        printComparison("Std Deviation", stats2011.stdDev, stats2010.stdDev);
+        printComparison("Data Points", stats2011.dataPoints, stats2012.dataPoints);
+        printComparison("Mean Height (m)", stats2011.mean, stats2012.mean);
+        printComparison("Max Height (m)", stats2011.max, stats2012.max);
+        printComparison("Min Height (m)", stats2011.min, stats2012.min);
+        printComparison("Tidal Range (m)", stats2011.range, stats2012.range);
+        printComparison("Std Deviation", stats2011.stdDev, stats2012.stdDev);
         
         System.out.println();
 
@@ -63,11 +57,11 @@ public class DatasetComparator {
         System.out.println("=== Data Quality Assessment ===");
         System.out.printf("2011 Data Quality: %.2f%% (missing: %d points)\n", 
                 stats2011.getQualityPercentage(), stats2011.getMissingPoints());
-        System.out.printf("2010 Data Quality: %.2f%% (missing: %d points)\n", 
-                stats2010.getQualityPercentage(), stats2010.getMissingPoints());
+        System.out.printf("2012 Data Quality: %.2f%% (missing: %d points)\n", 
+                stats2012.getQualityPercentage(), stats2012.getMissingPoints());
         
         // Recommendation
-        if (Math.abs(stats2011.mean - stats2010.mean) / stats2011.mean > 0.1) {
+        if (Math.abs(stats2011.mean - stats2012.mean) / stats2011.mean > 0.1) {
             System.out.println("WARNING: Significant difference in tidal characteristics (>10%)");
         } else {
             System.out.println("Datasets show similar tidal characteristics (<10% difference)");
@@ -77,32 +71,32 @@ public class DatasetComparator {
     /**
      * Compares baseline energy performance using simple strategies.
      */
-    private static void compareBaselinePerformance(List<Double> data2011, List<Double> data2010) {
+    private static void compareBaselinePerformance(List<Double> data2011, List<Double> data2012) {
         System.out.println("Comparing baseline energy performance...\n");
 
         // Test simple fixed strategies
         double[] testHeads = {1.5, 2.0, 2.5, 3.0};
 
         System.out.printf("%-20s %-15s %-15s %-12s\n", 
-                "Strategy", "2011 Energy", "2010 Energy", "Difference");
+                "Strategy", "2011 Energy", "2012 Energy", "Difference");
         System.out.println("-".repeat(62));
         
         for (double head : testHeads) {
             double energy2011 = testFixedHeadStrategy(data2011, head);
-            double energy2010 = testFixedHeadStrategy(data2010, head);
-            double diffPct = ((energy2011 - energy2010) / energy2010) * 100;
+            double energy2012 = testFixedHeadStrategy(data2012, head);
+            double diffPct = ((energy2011 - energy2012) / energy2012) * 100;
             
             System.out.printf("Fixed Head %.1fm     %-15.1f %-15.1f %+.1f%%\n", 
-                    head, energy2011/1000, energy2010/1000, diffPct);
+                    head, energy2011/1000, energy2012/1000, diffPct);
         }
 
          // Test simple grid search
         double gridEnergy2011 = testSimpleGridSearch(data2011);
-        double gridEnergy2010 = testSimpleGridSearch(data2010);
-        double gridDiffPct = ((gridEnergy2011 - gridEnergy2010) / gridEnergy2010) * 100;
+        double gridEnergy2012 = testSimpleGridSearch(data2012);
+        double gridDiffPct = ((gridEnergy2011 - gridEnergy2012) / gridEnergy2012) * 100;
         
         System.out.printf("Simple Grid Search  %-15.1f %-15.1f %+.1f%%\n", 
-                gridEnergy2011/1000, gridEnergy2010/1000, gridDiffPct);
+                gridEnergy2011/1000, gridEnergy2012/1000, gridDiffPct);
         
         System.out.println();
         
@@ -111,8 +105,8 @@ public class DatasetComparator {
                 Math.abs(gridDiffPct),
                 Arrays.stream(testHeads)
                         .map(head -> Math.abs(((testFixedHeadStrategy(data2011, head) - 
-                                               testFixedHeadStrategy(data2010, head)) / 
-                                               testFixedHeadStrategy(data2010, head)) * 100))
+                                               testFixedHeadStrategy(data2012, head)) / 
+                                               testFixedHeadStrategy(data2012, head)) * 100))
                         .max().orElse(0.0)
         );
         
@@ -170,12 +164,12 @@ public class DatasetComparator {
     /**
      * Prints a comparison row.
      */
-    private static void printComparison(String metric, double value2011, double value2010) {
-        double absDiff = Math.abs(value2011 - value2010);
-        double pctDiff = ((value2011 - value2010) / value2010) * 100;
+    private static void printComparison(String metric, double value2011, double value2012) {
+        double absDiff = Math.abs(value2011 - value2012);
+        double pctDiff = ((value2011 - value2012) / value2012) * 100;
         
         System.out.printf("%-20s %-12.2f %-12.2f %-12.2f %+.1f%%\n", 
-                metric, value2011, value2010, absDiff, pctDiff);
+                metric, value2011, value2012, absDiff, pctDiff);
     }
     
     /**
@@ -227,7 +221,7 @@ public class DatasetComparator {
         }
         
         double getQualityPercentage() {
-            // Assume expected ~35,000 points per year (15 min intervals)
+            // Assume expected ~35,040 points per year (15 min intervals)
             int expectedPoints = 35040; // 365 * 24 * 4
             return Math.min(100.0, (dataPoints * 100.0) / expectedPoints);
         }
@@ -238,4 +232,3 @@ public class DatasetComparator {
         }
     }
 }
-    
