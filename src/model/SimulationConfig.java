@@ -11,6 +11,7 @@ package src.model;
  * 
  * @author Emre Kaygusuz
  * @version 1.0
+ * @since 1.0
  */
 public final class SimulationConfig {
 
@@ -18,11 +19,11 @@ public final class SimulationConfig {
     // TEMPORAL CONFIGURATION
     // =======================
 
-    private static final double ONE_COMPLETE_TIDAL_CYCLE = 360.0 / 28.984; // 360 degrees / 28.984 degrees per hour
-
+    /** Complete tidal cycle duration in hours (360° ÷ 28.984°/hour) */
+    private static final double ONE_COMPLETE_TIDAL_CYCLE = 360.0 / 28.984; 
 
     /** Average duration of a half tide in hours */
-    private static final double HOURS_PER_HALF_TIDE = ONE_COMPLETE_TIDAL_CYCLE / 2.0; // 6.21
+    private static final double HOURS_PER_HALF_TIDE = ONE_COMPLETE_TIDAL_CYCLE / 2.0; // = 6.21
 
     /** Number of readings per half tide cycle */
     private static final int READINGS_PER_HALF_TIDE = 24;

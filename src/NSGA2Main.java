@@ -3,7 +3,6 @@ package src;
 import src.optimisation.NSGA2Algorithm;
 import src.optimisation.NSGA2Config;
 import src.optimisation.Individual;
-import src.optimisation.Population;
 
 import src.utils.TideDataReader;
 
@@ -27,6 +26,7 @@ import java.util.HashMap;
  * 
  * @author Emre Kaygusuz
  * @version 1.0
+ * @since 1.0
  */
 public class NSGA2Main {
 

@@ -14,6 +14,7 @@ import java.util.*;
  *  
  * @author Emre Kaygusuz
  * @version 2.1
+ * @since 1.0
  */
 public class TideDataReader {
 

@@ -5,7 +5,6 @@ import src.model.SimulationConfig;
 
 import java.util.List;
 
-
 /**
  * Simulates the operation of a tidal lagoon using a 0D model approach.
  * 
@@ -18,8 +17,14 @@ import java.util.List;
  * 
  * Uses backward-difference method for temporal discretisation.
  * 
+ * Turbine efficiency modeling based on variable speed turbine optimization procedures:
+ * Tengs, E., Storli, P. T., & Holst, M. (2018). Optimization procedure for variable speed 
+ * turbine design. Engineering Applications of Computational Fluid Mechanics, 12(1), 652–661. 
+ * https://doi.org/10.1080/19942060.2018.1507950
+ * 
  * @author Emre Kaygusuz
  * @version 1.2
+ * @since 1.0
  */
 public class TidalSimulator {
 
@@ -170,7 +175,11 @@ public class TidalSimulator {
 
     /**
      * Calculate realistic turbine power output using industry-aligned efficiency curves
-     * and explicit generator efficiency (e.g., Andritz Hydro data)
+     * and explicit generator efficiency.
+     * 
+     * Methodology informed by variable speed turbine optimization procedures:
+     * Tengs, E., Storli, P. T., & Holst, M. (2018). Optimization procedure for variable speed 
+     * turbine design. Engineering Applications of Computational Fluid Mechanics, 12(1), 652–661.
      */
     private static double calculateTurbinePower(double headDifference, double totalTurbineArea,
                                                double maxPowerMW, double dischargeCoefficient) {
@@ -181,8 +190,8 @@ public class TidalSimulator {
         // Hydraulic efficiency from industry hill chart
         double hydraulicEfficiency = calculateTurbineEfficiency(headDifference);
 
-        // Generator efficiency (typical 97% for large hydro)
-        double generatorEfficiency = 0.97;
+        // Generator efficiency ([p. 653] "Exceeds 96%")
+        double generatorEfficiency = 0.97; 
 
         // Overall efficiency
         double totalEfficiency = hydraulicEfficiency * generatorEfficiency;
@@ -197,16 +206,21 @@ public class TidalSimulator {
     }
     
     /**
-     * Industry-aligned turbine efficiency curve (e.g., Andritz Hydro hill chart)
+     * Industry-representative turbine efficiency curve based on variable speed turbine 
+     * optimization principles.
+     * 
+     * Reference: Tengs, E., Storli, P. T., & Holst, M. (2018). Optimization procedure for 
+     * variable speed turbine design. Engineering Applications of Computational Fluid Mechanics, 
+     * 12(1), 652–661. https://doi.org/10.1080/19942060.2018.1507950
      */
     private static double calculateTurbineEfficiency(double head) {
         if (head < MIN_OPERATING_HEAD) return 0.0;
         if (head < 1.2) {
-            return 0.35 + 0.125 * (head - 1.0);  // 35% → 47.5% (slow startup)
+            return 0.35 + 0.125 * (head - 1.0);  
         } else if (head < 1.8) {
-            return 0.475 + 0.208 * (head - 1.2); // 47.5% → 60% (rapid improvement)
+            return 0.475 + 0.208 * (head - 1.2); 
         } else if (head < 2.5) {
-            return 0.60 + 0.357 * (head - 1.8);  // 60% → 85% (main operating range)
+            return 0.60 + 0.357 * (head - 1.8);  
         } else if (head < 3.2) {
             return 0.85 + 0.143 * (head - 2.5);  // 85% → 95% (optimal range)
         } else if (head <= 4.0) {

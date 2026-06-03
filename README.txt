@@ -1,26 +1,27 @@
-Literature Review
-Project Proposal
-Implementation
+ReadME
 
-Phase 1
+The tuning results are in results folder.
 
-Lagoon.java (done)
-SimulationConfig.java (done)
-Individual.java (done)
-IndividualGenerator.java (done)
-Population.java (done)
-TidalSimulator.java (done)
-ObjectiveFunction.java (done)
-TideDataReader.java (done)
-Main.java
 
-Phase 2
+You can change the configuration parameters in NSGA2Config under getAnnualConfig()
+You can run DatasetComparator to compare 2011 and 2012 data
+You can also run ManualTuningRunner but you're going to have to change the testing configurations and the result will be displayed in the terminal and also saved in results folder as a csv file
 
-CrowdingDistance.java (done)
-GeneticOperators.java (done)
-NextGenerationSelection.java (done)
-NSGA2Algorithm.java (done)
-NSGA2Config.java (done)
-ParetoDominance.java (done)
-NSGA2Main.java
+COMPILATION INSTRUCTIONS
+========================
 
+To compile the Java project, run the following command from the project root directory:
+
+javac -d out src\NSGA2Main.java src\utils\TideDataReader.java src\optimisation\NSGA2Algorithm.java src\optimisation\NSGA2Config.java src\optimisation\Individual.java src\optimisation\Population.java src\optimisation\ObjectiveFunction.java src\optimisation\GeneticOperators.java src\optimisation\ParetoDominance.java src\optimisation\CrowdingDistance.java src\optimisation\NextGenerationSelection.java src\model\SimulationConfig.java src\analysis\DatasetComparator.java src\tuning\ManualTuningRunner.java
+
+After compilation, run the program with:
+
+java -cp out src.NSGA2Main annual
+
+or 
+
+java -cp out src.tuning.ManualTuningRunner
+
+or 
+
+java -cp out src.analysis.DatasetComparator

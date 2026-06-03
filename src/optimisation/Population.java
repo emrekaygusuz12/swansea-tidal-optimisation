@@ -13,6 +13,7 @@ import java.util.Comparator;
  * 
  * @author Emre Kaygusuz
  * @version 1.1
+ * @since 1.0
  */
 public class Population {
 

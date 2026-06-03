@@ -17,6 +17,7 @@ import java.util.List;
  * 
  * @author Emre Kaygusuz
  * @version 5.0
+ * @since 1.0
  */
 public class ObjectiveFunction {
 
